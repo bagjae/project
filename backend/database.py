@@ -27,7 +27,7 @@ SessionLocal = sessionmaker(autocommit=False, autoflush=False, bind=engine)
 Base = declarative_base()
 
 
-# API 요청이 들어올 때마다 DB 세션을 하나 열어주고,
+# API 요청이 들어올 때마다 DB 세션을 하나 열어주고, 
 # 요청 처리가 끝나면 자동으로 닫아주는 함수
 def get_db():
     db = SessionLocal()
