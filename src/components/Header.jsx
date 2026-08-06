@@ -26,9 +26,7 @@ export default function Header() {
   }, []);
 
   const handleSearch = () => {
-    if (query.trim()) {
-      navigate(`/search?type=${searchType}&query=${encodeURIComponent(query)}`);
-    }
+    navigate(`/search?type=${searchType}&query=${encodeURIComponent(query)}`);
   };
 
   const handleLogout = () => {
@@ -37,129 +35,105 @@ export default function Header() {
   };
 
   return (
-    <div className="absolute left-0 top-0 h-[176px] w-[1920px] bg-white z-40 px-[56px] flex items-center justify-between">
-      
-      {/* Logo Group */}
-      <div className="flex items-center gap-[23px] shrink-0">
-        <img
-          src={LOGO_ICON_URL}
-          alt="BookNest Logo"
-          className="h-[116px] w-[116px] object-contain cursor-pointer"
-          onClick={() => navigate('/')}
-        />
-        <span
-          className="text-[48px] leading-none text-black cursor-pointer"
-          style={{ fontFamily: 'Kadwa', fontWeight: 400 }}
-          onClick={() => navigate('/')}
-        >
-          BookNest
-        </span>
-      </div>
-
-      {/* Search Bar */}
-      <div 
-        ref={dropdownRef}
-        className="relative h-[76px] w-[959.75px] max-w-[959px] rounded-[70px] border-[3px] border-black bg-white flex items-center mx-[20px]"
-      >
-        <div 
-          className="relative ml-[20px] w-[140px] h-[56px] cursor-pointer bg-transparent z-20 rounded-xl flex items-center justify-center gap-2 hover:bg-gray-100 transition-colors shrink-0"
-          onClick={() => setIsDropdownOpen(!isDropdownOpen)}
-        >
-          <span
-            className="text-[24px] leading-none text-black pointer-events-none"
-            style={{ fontFamily: 'Inter', fontWeight: 400 }}
-          >
-            {searchType}
+    <header className="w-full bg-white border-b border-gray-200 z-40 sticky top-0">
+      <div className="max-w-7xl mx-auto h-[90px] px-6 flex items-center justify-between">
+        
+        {/* Logo Group */}
+        <div className="flex items-center gap-3 shrink-0 cursor-pointer group" onClick={() => navigate('/')}>
+          <img
+            src={LOGO_ICON_URL}
+            alt="BookNest Logo"
+            className="h-[42px] w-[42px] object-contain group-hover:opacity-80 transition-opacity"
+          />
+          <span className="text-2xl font-bold tracking-tight text-gray-900 group-hover:text-blue-700 transition-colors font-sans">
+            BookNest
           </span>
-          <svg
-            className="pointer-events-none shrink-0"
-            width="16"
-            height="12"
-            viewBox="0 0 16 12"
-          >
-            <polygon points="8,12 0,0 16,0" fill="#000000" />
-          </svg>
+        </div>
 
-          {isDropdownOpen && (
-            <div className="absolute left-0 top-[60px] w-[150px] bg-white border-[3px] border-black rounded-[15px] overflow-hidden flex flex-col z-50 shadow-md">
-              {['제목검색', '장르검색', '작가검색'].map((type) => (
-                <div
-                  key={type}
-                  className="pl-[13.5px] py-[12px] text-[24px] text-black hover:bg-gray-200 transition-colors cursor-pointer"
-                  style={{ fontFamily: 'Inter', fontWeight: 400 }}
-                  onClick={(e) => {
-                    e.stopPropagation();
-                    setSearchType(type);
-                    setIsDropdownOpen(false);
-                  }}
-                >
-                  {type}
-                </div>
-              ))}
-            </div>
+        {/* Search Bar */}
+        <div 
+          ref={dropdownRef}
+          className="relative flex items-center flex-1 max-w-2xl mx-8 bg-gray-50 border border-gray-300 rounded-full h-[46px] hover:bg-white hover:shadow-[0_2px_8px_rgba(0,0,0,0.08)] focus-within:bg-white focus-within:shadow-[0_2px_8px_rgba(0,0,0,0.08)] focus-within:border-blue-500 transition-all duration-200"
+        >
+          <div 
+            className="relative px-5 h-full cursor-pointer flex items-center justify-center gap-2 hover:text-blue-600 transition-colors shrink-0 text-gray-700 border-r border-gray-300"
+            onClick={() => setIsDropdownOpen(!isDropdownOpen)}
+          >
+            <span className="text-[14px] font-medium pointer-events-none whitespace-nowrap">
+              {searchType}
+            </span>
+            <svg className="w-3.5 h-3.5 pointer-events-none text-gray-500" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M19 9l-7 7-7-7"></path></svg>
+
+            {isDropdownOpen && (
+              <div className="absolute left-0 top-[52px] w-[130px] bg-white border border-gray-200 rounded-lg shadow-lg overflow-hidden flex flex-col z-50">
+                {['제목검색', '장르검색', '작가검색'].map((type) => (
+                  <div
+                    key={type}
+                    className="px-4 py-3 text-[14px] text-gray-700 hover:bg-gray-50 hover:text-blue-600 cursor-pointer transition-colors"
+                    onClick={(e) => {
+                      e.stopPropagation();
+                      setSearchType(type);
+                      setIsDropdownOpen(false);
+                    }}
+                  >
+                    {type}
+                  </div>
+                ))}
+              </div>
+            )}
+          </div>
+          
+          <input 
+            type="text"
+            value={query}
+            onChange={(e) => setQuery(e.target.value)}
+            onKeyDown={(e) => { if(e.key === 'Enter') handleSearch() }}
+            placeholder={`${searchType}어를 입력하세요`}
+            className="flex-1 h-full mx-4 min-w-0 text-[15px] outline-none bg-transparent placeholder-gray-400 font-sans"
+          />
+          
+          <button className="pr-5 pl-2 shrink-0 text-blue-600 hover:text-blue-800 transition-colors" onClick={handleSearch}>
+            <svg className="w-[22px] h-[22px]" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2.5" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z"></path></svg>
+          </button>
+        </div>
+
+        {/* Auth Buttons */}
+        <div className="flex items-center gap-5 shrink-0">
+          {currentUser ? (
+            <>
+              <button
+                onClick={() => navigate('/mypage')}
+                className="text-[14px] font-medium text-gray-700 hover:text-blue-600 transition-colors flex items-center gap-1.5"
+              >
+                <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z"></path></svg>
+                마이페이지
+              </button>
+              <button
+                onClick={handleLogout}
+                className="text-[14px] font-medium px-4 py-2 rounded-md border border-gray-200 text-gray-600 hover:bg-gray-50 transition-colors"
+              >
+                로그아웃
+              </button>
+            </>
+          ) : (
+            <>
+              <button
+                onClick={() => navigate('/login')}
+                className="text-[14px] font-medium text-gray-700 hover:text-blue-600 transition-colors"
+              >
+                로그인
+              </button>
+              <button
+                onClick={() => navigate('/signup')}
+                className="text-[14px] font-medium px-5 py-2 rounded-md bg-[#2d333a] text-white hover:bg-black transition-colors"
+              >
+                회원가입
+              </button>
+            </>
           )}
         </div>
-
-        <div className="ml-[10px] h-[51px] w-[1px] bg-[#AFAFAF] shrink-0" />
         
-        <input 
-          type="text"
-          value={query}
-          onChange={(e) => setQuery(e.target.value)}
-          onKeyDown={(e) => { if(e.key === 'Enter') handleSearch() }}
-          placeholder={`${searchType}어를 입력하세요`}
-          className="flex-1 h-full mx-[20px] min-w-0 text-[24px] outline-none bg-transparent placeholder-gray-400"
-          style={{ fontFamily: 'Kadwa' }}
-        />
-        
-        <div className="mr-[20px] shrink-0 cursor-pointer hover:opacity-70 transition-opacity" onClick={handleSearch}>
-          <svg width="40" height="43" viewBox="0 0 40 43" fill="none" xmlns="http://www.w3.org/2000/svg">
-            <circle cx="16" cy="16" r="13.5" fill="white" stroke="black" strokeWidth="3" />
-            <path d="M25 25 L36 36" stroke="black" strokeWidth="6" strokeLinecap="round" />
-          </svg>
-        </div>
       </div>
-
-      {/* Auth Buttons */}
-      <div className="flex items-center justify-end gap-[21px] shrink-0">
-        {currentUser ? (
-          <>
-            <button
-              onClick={() => navigate('/mypage')}
-              className="h-[52px] px-8 rounded-full border-[2px] border-blue-500 bg-white text-[24px] text-blue-500 hover:bg-blue-50 transition-colors flex items-center gap-2 cursor-pointer shadow-sm whitespace-nowrap"
-              style={{ fontFamily: 'Inter', fontWeight: 600 }}
-            >
-              <svg className="w-6 h-6 shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z"></path></svg>
-              마이페이지
-            </button>
-            <button
-              onClick={handleLogout}
-              className="h-[52px] px-8 rounded-full bg-gray-100 text-[24px] text-gray-600 hover:bg-gray-200 transition-colors cursor-pointer whitespace-nowrap"
-              style={{ fontFamily: 'Inter', fontWeight: 600 }}
-            >
-              로그아웃
-            </button>
-          </>
-        ) : (
-          <>
-            <button
-              onClick={() => navigate('/signup')}
-              className="h-[52px] w-[147px] border-[2px] border-[#5E5E5E] bg-white text-[24px] text-black hover:bg-gray-100 transition-colors cursor-pointer whitespace-nowrap"
-              style={{ fontFamily: 'Inter', fontWeight: 400 }}
-            >
-              회원가입
-            </button>
-            <button
-              onClick={() => navigate('/login')}
-              className="h-[52px] w-[147px] bg-black text-[24px] text-white hover:bg-gray-800 transition-colors cursor-pointer whitespace-nowrap"
-              style={{ fontFamily: 'Inter', fontWeight: 400 }}
-            >
-              로그인
-            </button>
-          </>
-        )}
-      </div>
-      
-    </div>
+    </header>
   );
 }

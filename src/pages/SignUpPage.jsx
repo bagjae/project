@@ -20,10 +20,11 @@ export default function SignUpPage() {
   
   const [showWelcome, setShowWelcome] = useState(false);
 
-  const handleIdBlur = () => {
+  const handleIdBlur = async () => {
     if (!username) return;
-    if (checkIdDuplicate(username)) {
-      setIdError('사용할 수 없는 아이디입니다');
+    const isDuplicate = await checkIdDuplicate(username);
+    if (isDuplicate) {
+      setIdError('사용할 수 없는 아이디입니다.');
     } else {
       setIdError('');
     }
@@ -34,23 +35,26 @@ export default function SignUpPage() {
     if (errorSetter) errorSetter('');
   };
 
-  const handleSignup = () => {
+  const handleSignup = async () => {
     if (!username || !password || !confirmPassword || !name || !phone) {
       alert("모든 필드를 입력해주세요.");
       return;
     }
-    if (checkIdDuplicate(username)) {
-      setIdError('사용할 수 없는 아이디입니다');
+    const isDuplicate = await checkIdDuplicate(username);
+    if (isDuplicate) {
+      setIdError('사용할 수 없는 아이디입니다.');
       return;
     }
     if (password !== confirmPassword) {
-      setPwError('비밀번호가 일치하지 않습니다');
+      setPwError('비밀번호가 일치하지 않습니다.');
       return;
     }
 
-    const success = signup({ username, password, name, phone });
-    if (success) {
+    const result = await signup({ username, password, name, phone });
+    if (result.success) {
       setShowWelcome(true);
+    } else {
+      alert(result.error);
     }
   };
 
@@ -61,86 +65,83 @@ export default function SignUpPage() {
   };
 
   return (
-    <div 
-      className="relative mx-auto h-[1080px] w-[1920px] bg-gray-50 overflow-hidden flex items-center justify-center" 
-      style={{ transformOrigin: 'top center', transform: 'scale(max(min(1, 100vw / 1920), 0.5))' }}
-    >
-      <div className="w-[540px] rounded-[24px] bg-white shadow-2xl p-[50px] px-[60px] flex flex-col items-center border border-gray-100">
+    <div className="min-h-screen w-full bg-[#fbfbfb] flex flex-col items-center justify-center font-sans py-12 px-6">
+      <div className="w-full max-w-[460px] rounded-2xl bg-white shadow-[0_8px_30px_rgb(0,0,0,0.04)] p-10 flex flex-col items-center border border-gray-200">
         
         {/* Logo and Title */}
-        <div className="flex flex-col items-center gap-5 mb-8">
-          <div className="flex items-center gap-4 cursor-pointer" onClick={() => navigate('/')}>
-            <img src={LOGO_ICON_URL} alt="BookNest Logo" className="h-[64px] w-[64px] object-contain" />
-            <span className="text-[38px] text-black" style={{ fontFamily: 'Kadwa', fontWeight: 700 }}>BookNest</span>
+        <div className="flex flex-col items-center gap-4 mb-8 w-full">
+          <div className="flex items-center gap-3 cursor-pointer group" onClick={() => navigate('/')}>
+            <img src={LOGO_ICON_URL} alt="BookNest Logo" className="h-[40px] w-[40px] object-contain group-hover:opacity-80 transition-opacity" />
+            <span className="text-[28px] text-black font-bold tracking-tight group-hover:text-blue-700 transition-colors">BookNest</span>
           </div>
-          <span className="text-[26px] text-gray-500" style={{ fontFamily: 'Kadwa', fontWeight: 400 }}>
-            회원가입
+          <span className="text-[16px] text-gray-500 font-medium mt-1">
+            간편하게 가입하고 서비스를 이용해보세요
           </span>
         </div>
 
         {/* Form Fields */}
-        <div className="w-full flex flex-col gap-6">
+        <div className="w-full flex flex-col gap-5">
           <div className="flex flex-col gap-2">
-            <label className="text-[20px] text-gray-700 font-kadwa">전화번호</label>
+            <label className="text-[14px] font-medium text-gray-700">이름</label>
+            <input 
+              type="text" 
+              value={name}
+              onChange={handleTyping(setName)}
+              placeholder="이름을 입력하세요" 
+              className="w-full h-[48px] rounded-lg border border-gray-300 px-4 text-[15px] text-gray-900 placeholder-gray-400 outline-none focus:border-blue-500 focus:ring-2 focus:ring-blue-100 transition-all" 
+            />
+          </div>
+
+          <div className="flex flex-col gap-2">
+            <label className="text-[14px] font-medium text-gray-700">전화번호</label>
             <input 
               type="text" 
               value={phone}
               onChange={handleTyping(setPhone)}
-              placeholder="전화번호를 입력하세요" 
-              className="w-full h-[56px] rounded-xl border border-gray-300 px-5 text-[20px] text-black placeholder-gray-400 outline-none focus:border-blue-500 focus:ring-4 focus:ring-blue-100 transition-all font-kadwa" 
+              placeholder="010-0000-0000" 
+              className="w-full h-[48px] rounded-lg border border-gray-300 px-4 text-[15px] text-gray-900 placeholder-gray-400 outline-none focus:border-blue-500 focus:ring-2 focus:ring-blue-100 transition-all" 
             />
           </div>
 
           <div className="flex flex-col gap-2 relative">
-            <label className="text-[20px] text-gray-700 font-kadwa">아이디</label>
+            <label className="text-[14px] font-medium text-gray-700">아이디</label>
             <input 
               type="text" 
               value={username}
               onChange={handleTyping(setUsername, setIdError)}
               onBlur={handleIdBlur}
               placeholder="사용할 아이디를 입력하세요" 
-              className={`w-full h-[56px] rounded-xl border ${idError ? 'border-red-500' : 'border-gray-300'} px-5 text-[20px] text-black placeholder-gray-400 outline-none focus:border-blue-500 focus:ring-4 focus:ring-blue-100 transition-all font-kadwa`} 
+              className={`w-full h-[48px] rounded-lg border ${idError ? 'border-red-500 bg-red-50/30' : 'border-gray-300'} px-4 text-[15px] text-gray-900 placeholder-gray-400 outline-none focus:border-blue-500 focus:ring-2 focus:ring-blue-100 transition-all`} 
             />
-            {idError && <span className="text-red-500 text-[16px] font-kadwa mt-1 absolute -bottom-6 left-1 animate-fade-in-up">{idError}</span>}
+            {idError && <span className="text-red-500 text-[13px] font-medium mt-1 animate-fade-in-up flex items-center gap-1.5"><svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M12 8v4m0 4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"></path></svg>{idError}</span>}
           </div>
 
-          <div className="flex flex-col gap-2 relative mt-2">
-            <label className="text-[20px] text-gray-700 font-kadwa">비밀번호</label>
+          <div className="flex flex-col gap-2">
+            <label className="text-[14px] font-medium text-gray-700">비밀번호</label>
             <input 
               type="password" 
               value={password}
               onChange={handleTyping(setPassword)}
               placeholder="비밀번호를 입력하세요" 
-              className="w-full h-[56px] rounded-xl border border-gray-300 px-5 text-[20px] text-black placeholder-gray-400 outline-none focus:border-blue-500 focus:ring-4 focus:ring-blue-100 transition-all font-kadwa" 
+              className="w-full h-[48px] rounded-lg border border-gray-300 px-4 text-[15px] text-gray-900 placeholder-gray-400 outline-none focus:border-blue-500 focus:ring-2 focus:ring-blue-100 transition-all" 
             />
           </div>
           
           <div className="flex flex-col gap-2 relative">
-            <label className="text-[20px] text-gray-700 font-kadwa">비밀번호 확인</label>
+            <label className="text-[14px] font-medium text-gray-700">비밀번호 확인</label>
             <input 
               type="password" 
               value={confirmPassword}
               onChange={handleTyping(setConfirmPassword, setPwError)}
               placeholder="비밀번호를 다시 입력하세요" 
-              className={`w-full h-[56px] rounded-xl border ${pwError ? 'border-red-500' : 'border-gray-300'} px-5 text-[20px] text-black placeholder-gray-400 outline-none focus:border-blue-500 focus:ring-4 focus:ring-blue-100 transition-all font-kadwa`} 
+              className={`w-full h-[48px] rounded-lg border ${pwError ? 'border-red-500 bg-red-50/30' : 'border-gray-300'} px-4 text-[15px] text-gray-900 placeholder-gray-400 outline-none focus:border-blue-500 focus:ring-2 focus:ring-blue-100 transition-all`} 
             />
-            {pwError && <span className="text-red-500 text-[16px] font-kadwa mt-1 absolute -bottom-6 left-1 animate-fade-in-up">{pwError}</span>}
-          </div>
-
-          <div className="flex flex-col gap-2 mt-2">
-            <label className="text-[20px] text-gray-700 font-kadwa">이름</label>
-            <input 
-              type="text" 
-              value={name}
-              onChange={handleTyping(setName)}
-              placeholder="사용할 이름을 입력하세요" 
-              className="w-full h-[56px] rounded-xl border border-gray-300 px-5 text-[20px] text-black placeholder-gray-400 outline-none focus:border-blue-500 focus:ring-4 focus:ring-blue-100 transition-all font-kadwa" 
-            />
+            {pwError && <span className="text-red-500 text-[13px] font-medium mt-1 animate-fade-in-up flex items-center gap-1.5"><svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M12 8v4m0 4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"></path></svg>{pwError}</span>}
           </div>
 
           {/* Signup Button */}
           <button 
-            className="w-full h-[64px] mt-4 rounded-xl bg-[#0088ff] flex items-center justify-center text-[26px] text-white hover:bg-blue-600 hover:shadow-lg active:scale-[0.98] transition-all font-kadwa font-bold"
+            className="w-full h-[52px] rounded-lg bg-[#2d333a] flex items-center justify-center text-[16px] font-semibold text-white hover:bg-black hover:shadow-md active:scale-[0.98] transition-all mt-4"
             onClick={handleSignup}
           >
             회원가입
@@ -148,12 +149,12 @@ export default function SignUpPage() {
         </div>
 
         {/* Login Link */}
-        <div className="mt-8 flex items-center gap-3">
-          <span className="text-[20px] text-gray-500 font-kadwa">
+        <div className="mt-8 pt-6 w-full border-t border-gray-100 flex items-center justify-center gap-2">
+          <span className="text-[14px] text-gray-500">
             이미 계정이 있으신가요?
           </span>
           <button 
-            className="text-[20px] text-[#0088ff] hover:text-blue-700 hover:underline transition-colors font-kadwa" 
+            className="text-[14px] font-semibold text-blue-600 hover:text-blue-800 transition-colors" 
             onClick={() => navigate('/login')}
           >
             로그인
@@ -163,16 +164,17 @@ export default function SignUpPage() {
 
       {/* Welcome Modal */}
       {showWelcome && (
-        <div className="absolute inset-0 z-50 flex items-center justify-center bg-black bg-opacity-40 backdrop-blur-sm">
-          <div className="w-[500px] bg-white rounded-3xl shadow-2xl p-10 flex flex-col items-center animate-fade-in-up">
-            <div className="w-24 h-24 bg-green-100 rounded-full flex items-center justify-center mb-6">
-              <svg className="w-12 h-12 text-green-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="3" d="M5 13l4 4L19 7" />
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-gray-900/40 backdrop-blur-sm p-4">
+          <div className="w-full max-w-[400px] bg-white rounded-2xl shadow-xl p-8 flex flex-col items-center animate-fade-in-up border border-gray-100">
+            <div className="w-16 h-16 bg-blue-50 rounded-full flex items-center justify-center mb-5">
+              <svg className="w-8 h-8 text-blue-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2.5" d="M5 13l4 4L19 7" />
               </svg>
             </div>
-            <h2 className="text-[36px] font-bold text-gray-800 font-kadwa mb-8 text-center">환영합니다 {name}님!</h2>
+            <h2 className="text-[22px] font-bold text-gray-900 mb-2 text-center tracking-tight">회원가입 완료</h2>
+            <p className="text-[15px] text-gray-600 mb-8 text-center">환영합니다 <span className="font-bold text-gray-900">{name}</span>님!</p>
             <button 
-              className="w-full h-[60px] rounded-xl bg-[#0088ff] text-white text-[24px] font-bold hover:bg-blue-600 transition-colors font-kadwa"
+              className="w-full h-[48px] rounded-lg bg-[#2d333a] text-white text-[15px] font-semibold hover:bg-black transition-colors"
               onClick={handleWelcomeConfirm}
             >
               확인
