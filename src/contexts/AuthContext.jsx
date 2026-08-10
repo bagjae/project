@@ -29,7 +29,7 @@ export function AuthProvider({ children }) {
         body: JSON.stringify({ login_id: username, password })
       });
       if (!response.ok) return false;
-      
+
       const data = await response.json();
       setCurrentUser({
         id: data.id,
@@ -84,7 +84,7 @@ export function AuthProvider({ children }) {
 
   const rentBook = async (bookId) => {
     if (!currentUser) return null;
-    
+
     try {
       const response = await fetch(`${BASE_URL}/rentals`, {
         method: 'POST',
@@ -110,8 +110,26 @@ export function AuthProvider({ children }) {
   };
 
   const returnBook = async (rentalId) => {
-    alert("백엔드에 아직 반납 기능 API가 구현되지 않았습니다.");
-    return false;
+    try {
+      const response = await fetch(`${BASE_URL}/rentals/${rentalId}/return`, {
+        method: 'PATCH',
+        headers: { 'Content-Type': 'application/json' }
+      });
+
+      if (!response.ok) {
+        const errData = await response.json().catch(() => ({}));
+        alert(errData.detail || "반납에 실패했습니다.");
+        return false;
+      }
+
+      alert("성공적으로 반납되었습니다!");
+      window.location.reload(); // 새로고침하여 마이페이지/대여현황 업데이트
+      return true;
+    } catch (err) {
+      console.error(err);
+      alert("서버와 연결할 수 없습니다.");
+      return false;
+    }
   };
 
   const value = {

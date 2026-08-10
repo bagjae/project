@@ -79,10 +79,7 @@ export default function WeeklyBest() {
                 <div key={book.id || i} className="relative shrink-0 group/book cursor-pointer hover:-translate-y-2 transition-transform duration-300" style={{ width: 220 }}>
                   <div className="w-full aspect-[2/3] rounded-lg shadow-[0_4px_12px_rgba(0,0,0,0.08)] overflow-hidden bg-gray-100 border border-gray-200 flex items-center justify-center relative">
                     {/* Placeholder image logic since backend does not provide coverUrls */}
-                    <div className="absolute inset-0 flex flex-col items-center justify-center p-4 text-center bg-gradient-to-br from-gray-50 to-gray-200">
-                       <span className="text-gray-400 font-bold text-lg mb-2">{book.title}</span>
-                       <span className="text-gray-500 text-sm">이미지 없음</span>
-                    </div>
+                    <img src={`https://picsum.photos/seed/${book.id || i}/220/330`} alt={book.title} className="w-full h-full object-cover" />
                   </div>
                   <div className="mt-4 px-1">
                     <p className="text-gray-900 font-bold text-[16px] truncate" title={book.title}>{book.title}</p>

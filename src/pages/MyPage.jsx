@@ -153,7 +153,7 @@ export default function MyPage() {
                           </span>
                         </div>
                         <button 
-                          onClick={() => handleReturn(rental.id)}
+                          onClick={() => handleReturn(rental.rental_id)}
                           className="px-4 py-2 bg-white border border-gray-300 text-gray-700 font-semibold rounded-lg hover:bg-gray-50 hover:border-gray-400 transition-colors shadow-sm text-[14px]"
                         >
                           반납하기

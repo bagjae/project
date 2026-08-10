@@ -106,7 +106,7 @@ export default function SearchResultsPage() {
                 className="w-full bg-white rounded-xl border border-gray-200 shadow-sm hover:shadow-[0_4px_20px_rgba(0,0,0,0.08)] hover:border-gray-300 cursor-pointer transition-all flex flex-col sm:flex-row items-center sm:items-start p-6 gap-8 group"
               >
                 <div className="w-[130px] shrink-0 bg-gray-100 rounded-lg shadow-sm overflow-hidden border border-gray-200 group-hover:-translate-y-1 transition-transform aspect-[2/3] flex items-center justify-center">
-                  <span className="text-gray-400 text-sm">이미지 없음</span>
+                  <img src={`https://picsum.photos/seed/${book.id}/260/390`} alt={book.title} className="w-full h-full object-cover" />
                 </div>
                 <div className="flex flex-col gap-2 flex-1 pt-1">
                   <div className="flex items-center gap-2 mb-1">
@@ -145,7 +145,7 @@ export default function SearchResultsPage() {
             
             <div className="flex flex-col md:flex-row gap-10">
               <div className="w-[200px] shrink-0 rounded-lg shadow-[0_8px_30px_rgb(0,0,0,0.12)] overflow-hidden border border-gray-200 mx-auto md:mx-0 aspect-[2/3] bg-gray-100 flex items-center justify-center">
-                <span className="text-gray-400">이미지 없음</span>
+                <img src={`https://picsum.photos/seed/${selectedBook.id}/400/600`} alt={selectedBook.title} className="w-full h-full object-cover" />
               </div>
               <div className="flex flex-col gap-4 flex-1 pt-2">
                 <div className="flex flex-col gap-2">
