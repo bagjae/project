@@ -5,13 +5,12 @@ import RentalStatus from '../components/RentalStatus';
 
 export default function MainPage() {
   return (
-    <div 
-      className="relative mx-auto h-[1498px] w-[1920px] bg-white overflow-hidden shadow-xl" 
-      style={{ transformOrigin: 'top center', transform: 'scale(max(min(1, 100vw / 1920), 0.5))' }}
-    >
+    <div className="min-h-screen w-full bg-[#fbfbfb] flex flex-col font-sans">
       <Header />
-      <WeeklyBest />
-      <RentalStatus />
+      <main className="flex-1 w-full pt-4">
+        <WeeklyBest />
+        <RentalStatus />
+      </main>
     </div>
   );
 }

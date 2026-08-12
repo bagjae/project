@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import Header from '../components/Header';
 import { useSearchParams, useNavigate } from 'react-router-dom';
 import { useAuth } from '../contexts/AuthContext';
@@ -9,157 +9,196 @@ export default function SearchResultsPage() {
   const query = searchParams.get('query') || '';
   const type = searchParams.get('type') || '제목검색';
   
-  const { books, currentUser, rentBook } = useAuth();
+  const { currentUser, rentBook } = useAuth();
   
+  const [filteredBooks, setFilteredBooks] = useState([]);
   const [selectedBook, setSelectedBook] = useState(null);
-  const [rentSuccessModal, setRentSuccessModal] = useState(null); // stores { returnDate }
+  const [rentSuccessModal, setRentSuccessModal] = useState(null);
+  const [loading, setLoading] = useState(false);
 
-  // Search logic
-  const filteredBooks = books.filter(b => {
-    if (!query) return true;
-    if (type === '작가검색') return b.author.includes(query);
-    if (type === '장르검색') return b.genre.includes(query);
-    return b.title.includes(query);
-  });
+  useEffect(() => {
+    const fetchBooks = async () => {
+      setLoading(true);
+      try {
+        let url = 'http://192.168.1.212:8000/books/search';
+        if (query) {
+          if (type === '작가검색') url += `?author=${encodeURIComponent(query)}`;
+          else if (type === '장르검색') url += `?genre=${encodeURIComponent(query)}`;
+          else url += `?title=${encodeURIComponent(query)}`;
+        }
+        const res = await fetch(url);
+        if (res.ok) {
+          const data = await res.json();
+          setFilteredBooks(data);
+        }
+      } catch (err) {
+        console.error("도서 검색 실패:", err);
+      }
+      setLoading(false);
+    };
+    fetchBooks();
+  }, [query, type]);
 
-  const handleRentClick = () => {
+  const handleBookClick = async (bookId) => {
+    try {
+      const res = await fetch(`http://192.168.1.212:8000/books/${bookId}`);
+      if (res.ok) {
+        const data = await res.json();
+        setSelectedBook(data);
+      }
+    } catch(err) {
+      console.error("도서 상세정보 불러오기 실패:", err);
+    }
+  };
+
+  const handleRentClick = async () => {
     if (!currentUser) {
       navigate('/login');
       return;
     }
     
-    if (selectedBook.availableQuantity > 0) {
-      const returnDateObj = rentBook(selectedBook.id);
+    if (selectedBook.stock_quantity > 0) {
+      const returnDateObj = await rentBook(selectedBook.id);
       if (returnDateObj) {
         setRentSuccessModal({ returnDate: returnDateObj });
+        // Update stock locally for UI
+        setSelectedBook(prev => ({ ...prev, stock_quantity: prev.stock_quantity - 1 }));
+        setFilteredBooks(prev => prev.map(b => b.id === selectedBook.id ? { ...b, is_available: selectedBook.stock_quantity - 1 > 0 } : b));
       }
     }
   };
 
   const handleCloseSuccess = () => {
     setRentSuccessModal(null);
-    setSelectedBook(null); // Close both modals
+    setSelectedBook(null);
   };
 
   return (
-    <div 
-      className="relative mx-auto h-[1498px] w-[1920px] bg-white overflow-hidden shadow-xl" 
-      style={{ transformOrigin: 'top center', transform: 'scale(max(min(1, 100vw / 1920), 0.5))' }}
-    >
+    <div className="min-h-screen w-full bg-[#fbfbfb] flex flex-col font-sans">
       <Header />
       
-      <div className="absolute left-[259px] top-[287px] flex flex-col gap-[20px] w-[1402px] h-[1100px]">
+      <main className="flex-1 w-full max-w-5xl mx-auto px-6 py-10">
         {/* Search Result Header */}
-        <div className="flex items-end justify-between px-2 mb-4">
-          <span className="text-[40px] text-black" style={{ fontFamily: 'Kadwa', fontWeight: 700 }}>
-            "{query}" 검색 결과
-          </span>
-          <span className="text-[28px] text-gray-500" style={{ fontFamily: 'Kadwa' }}>
-            총 {filteredBooks.length}건
+        <div className="flex items-end justify-between border-b border-gray-900 pb-4 mb-8">
+          <h1 className="text-[26px] font-bold text-gray-900 tracking-tight">
+            <span className="text-blue-600">"{query}"</span> 검색 결과
+          </h1>
+          <span className="text-[15px] text-gray-500 font-medium">
+            총 <span className="text-gray-900 font-bold">{filteredBooks.length}</span>건
           </span>
         </div>
 
         {/* Result List */}
-        <div className="flex flex-col gap-[30px] overflow-y-auto pr-4 pb-10">
-          {filteredBooks.length === 0 ? (
-            <div className="w-full text-center py-20 text-[30px] text-gray-400 font-kadwa">
+        <div className="flex flex-col gap-6">
+          {loading ? (
+             <div className="w-full text-center py-24 text-[16px] text-gray-500 bg-white rounded-xl border border-gray-200 shadow-sm">
+               검색 중입니다...
+             </div>
+          ) : filteredBooks.length === 0 ? (
+            <div className="w-full text-center py-24 text-[16px] text-gray-500 bg-white rounded-xl border border-gray-200 shadow-sm">
               검색 결과가 없습니다.
             </div>
           ) : (
             filteredBooks.map((book) => (
               <div 
                 key={book.id} 
-                onClick={() => setSelectedBook(book)}
-                className="w-full bg-[#f8f9fa] rounded-[21px] border-[2px] border-gray-200 shadow-sm hover:shadow-lg hover:border-blue-400 cursor-pointer transition-all flex items-center p-8 gap-10"
+                onClick={() => handleBookClick(book.id)}
+                className="w-full bg-white rounded-xl border border-gray-200 shadow-sm hover:shadow-[0_4px_20px_rgba(0,0,0,0.08)] hover:border-gray-300 cursor-pointer transition-all flex flex-col sm:flex-row items-center sm:items-start p-6 gap-8 group"
               >
-                <div className="w-[180px] h-[250px] shrink-0 bg-white rounded-lg shadow-md overflow-hidden">
-                  <img src={book.coverUrl} alt={book.title} className="w-full h-full object-cover" />
+                <div className="w-[130px] shrink-0 bg-gray-100 rounded-lg shadow-sm overflow-hidden border border-gray-200 group-hover:-translate-y-1 transition-transform aspect-[2/3] flex items-center justify-center">
+                  <img src={`https://picsum.photos/seed/${book.id}/260/390`} alt={book.title} className="w-full h-full object-cover" />
                 </div>
-                <div className="flex flex-col gap-3 flex-1">
-                  <div className="flex items-center gap-4">
-                    <span className="bg-gray-200 text-gray-700 px-3 py-1 rounded-full text-[18px] font-kadwa">{book.genre}</span>
-                    <span className={`px-3 py-1 rounded-full text-[18px] font-kadwa text-white ${book.availableQuantity > 0 ? 'bg-blue-500' : 'bg-red-500'}`}>
-                      {book.availableQuantity > 0 ? '대여 가능' : '대여 불가'}
+                <div className="flex flex-col gap-2 flex-1 pt-1">
+                  <div className="flex items-center gap-2 mb-1">
+                    <span className="bg-gray-100 text-gray-600 px-2.5 py-1 rounded text-[13px] font-medium border border-gray-200">{book.genre_name}</span>
+                    <span className={`px-2.5 py-1 rounded text-[13px] font-medium border ${book.is_available ? 'bg-blue-50 text-blue-700 border-blue-200' : 'bg-red-50 text-red-700 border-red-200'}`}>
+                      {book.is_available ? '대여 가능' : '대여 불가'}
                     </span>
                   </div>
-                  <span className="text-[42px] font-bold text-black leading-tight" style={{ fontFamily: 'Kadwa' }}>{book.title}</span>
-                  <span className="text-[26px] text-gray-600" style={{ fontFamily: 'Kadwa' }}>{book.author} 저</span>
-                  <p className="text-[22px] text-gray-500 mt-2 line-clamp-2">{book.description}</p>
+                  <h2 className="text-[22px] font-bold text-gray-900 leading-tight group-hover:text-blue-700 transition-colors">{book.title}</h2>
+                  <span className="text-[15px] text-gray-600 font-medium">{book.author_name} 저</span>
                 </div>
               </div>
             ))
           )}
         </div>
-      </div>
+      </main>
 
       {/* Book Detail Modal */}
       {selectedBook && !rentSuccessModal && (
         <div 
-          className="absolute inset-0 z-50 flex items-center justify-center bg-black bg-opacity-40 backdrop-blur-sm"
+          className="fixed inset-0 z-50 flex items-center justify-center bg-gray-900/50 backdrop-blur-sm p-4"
           onClick={() => setSelectedBook(null)}
         >
           <div 
-            className="w-[900px] bg-white rounded-3xl shadow-2xl p-12 flex flex-col relative animate-fade-in-up"
-            onClick={(e) => e.stopPropagation()} // Prevent clicking inside from closing
+            className="w-full max-w-[800px] bg-white rounded-2xl shadow-2xl p-10 flex flex-col relative animate-fade-in-up border border-gray-100"
+            onClick={(e) => e.stopPropagation()} 
           >
             <button 
-              className="absolute top-8 right-8 text-gray-400 hover:text-black transition-colors"
+              className="absolute top-6 right-6 text-gray-400 hover:text-gray-900 transition-colors bg-gray-100 rounded-full p-2"
               onClick={() => setSelectedBook(null)}
             >
-              <svg className="w-10 h-10" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                 <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M6 18L18 6M6 6l12 12" />
               </svg>
             </button>
             
-            <div className="flex gap-12">
-              <div className="w-[260px] h-[370px] shrink-0 rounded-xl shadow-xl overflow-hidden">
-                <img src={selectedBook.coverUrl} alt={selectedBook.title} className="w-full h-full object-cover" />
+            <div className="flex flex-col md:flex-row gap-10">
+              <div className="w-[200px] shrink-0 rounded-lg shadow-[0_8px_30px_rgb(0,0,0,0.12)] overflow-hidden border border-gray-200 mx-auto md:mx-0 aspect-[2/3] bg-gray-100 flex items-center justify-center">
+                <img src={`https://picsum.photos/seed/${selectedBook.id}/400/600`} alt={selectedBook.title} className="w-full h-full object-cover" />
               </div>
-              <div className="flex flex-col gap-6 flex-1 pt-4">
-                <div className="flex flex-col gap-1">
-                  <span className="text-xl text-blue-500 font-bold tracking-wide font-kadwa">{selectedBook.genre}</span>
-                  <h2 className="text-[46px] font-bold text-gray-900 leading-tight font-kadwa">{selectedBook.title}</h2>
-                  <span className="text-[28px] text-gray-600 font-kadwa">{selectedBook.author}</span>
+              <div className="flex flex-col gap-4 flex-1 pt-2">
+                <div className="flex flex-col gap-2">
+                  <span className="text-[14px] text-blue-600 font-bold tracking-wide">{selectedBook.genre_name}</span>
+                  <h2 className="text-[32px] font-bold text-gray-900 leading-tight tracking-tight">{selectedBook.title}</h2>
+                  <span className="text-[16px] text-gray-600 font-medium">{selectedBook.author_name} 저</span>
                 </div>
                 
-                <div className="h-[1px] w-full bg-gray-200 my-2" />
+                <div className="h-px w-full bg-gray-200 my-4" />
                 
-                <div className="grid grid-cols-2 gap-8 mb-4">
-                  <div className="flex flex-col gap-2">
-                    <span className="text-lg text-gray-500 font-kadwa">도서 위치</span>
-                    <span className="text-2xl font-semibold text-gray-800 font-kadwa">{selectedBook.location}</span>
+                <div className="grid grid-cols-2 gap-x-6 gap-y-5 mb-8 bg-gray-50 p-5 rounded-xl border border-gray-100">
+                  <div className="flex flex-col gap-1">
+                    <span className="text-[12px] text-gray-500 font-medium">도서 위치</span>
+                    <span className="text-[15px] font-bold text-gray-900">{selectedBook.location}</span>
                   </div>
-                  <div className="flex flex-col gap-2">
-                    <span className="text-lg text-gray-500 font-kadwa">잔여 수량 / 총 수량</span>
-                    <span className="text-2xl font-semibold text-gray-800 font-kadwa">{selectedBook.availableQuantity} / {selectedBook.totalQuantity}</span>
+                  <div className="flex flex-col gap-1">
+                    <span className="text-[12px] text-gray-500 font-medium">잔여 수량</span>
+                    <span className="text-[15px] font-bold text-gray-900">{selectedBook.stock_quantity} 권</span>
+                  </div>
+                  <div className="flex flex-col gap-1 col-span-2">
+                    <span className="text-[12px] text-gray-500 font-medium">ISBN</span>
+                    <span className="text-[14px] font-medium text-gray-600">{selectedBook.isbn}</span>
                   </div>
                 </div>
 
                 {/* Render Button Logic */}
-                {selectedBook.availableQuantity > 0 ? (
-                  currentUser ? (
-                    <button 
-                      onClick={handleRentClick}
-                      className="w-full h-[64px] bg-[#0088ff] text-white text-[26px] font-bold rounded-xl hover:bg-blue-600 transition-colors shadow-md font-kadwa"
-                    >
-                      대여 신청
-                    </button>
+                <div className="mt-auto">
+                  {selectedBook.stock_quantity > 0 ? (
+                    currentUser ? (
+                      <button 
+                        onClick={handleRentClick}
+                        className="w-full h-[56px] bg-[#2d333a] text-white text-[18px] font-bold rounded-xl hover:bg-black transition-colors shadow-md flex items-center justify-center gap-2"
+                      >
+                        <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M12 6v6m0 0v6m0-6h6m-6 0H6"></path></svg>
+                        대여 신청
+                      </button>
+                    ) : (
+                      <button 
+                        onClick={handleRentClick}
+                        className="w-full h-[56px] border border-gray-300 bg-white text-gray-800 text-[18px] font-bold rounded-xl hover:bg-gray-50 transition-colors shadow-sm"
+                      >
+                        로그인하고 대여하기
+                      </button>
+                    )
                   ) : (
                     <button 
-                      onClick={handleRentClick}
-                      className="w-full h-[64px] border-2 border-[#0088ff] text-[#0088ff] text-[26px] font-bold rounded-xl hover:bg-blue-50 transition-colors shadow-sm font-kadwa"
+                      disabled
+                      className="w-full h-[56px] bg-gray-100 text-gray-400 text-[18px] font-bold rounded-xl cursor-not-allowed border border-gray-200"
                     >
-                      로그인하고 대여하기
+                      대여할 수 없습니다
                     </button>
-                  )
-                ) : (
-                  <button 
-                    disabled
-                    className="w-full h-[64px] bg-gray-300 text-gray-600 text-[26px] font-bold rounded-xl cursor-not-allowed font-kadwa"
-                  >
-                    대여할 수 없습니다
-                  </button>
-                )}
+                  )}
+                </div>
               </div>
             </div>
           </div>
@@ -168,21 +207,17 @@ export default function SearchResultsPage() {
 
       {/* Rent Success Modal */}
       {rentSuccessModal && (
-        <div 
-          className="absolute inset-0 z-50 flex items-center justify-center bg-black bg-opacity-40 backdrop-blur-sm"
-        >
-          <div className="w-[500px] bg-white rounded-3xl shadow-2xl p-10 flex flex-col items-center animate-fade-in-up">
-            <div className="w-24 h-24 bg-green-100 rounded-full flex items-center justify-center mb-6">
-              <svg className="w-12 h-12 text-green-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="3" d="M5 13l4 4L19 7" />
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-gray-900/50 backdrop-blur-sm p-4">
+          <div className="w-full max-w-[400px] bg-white rounded-2xl shadow-xl p-8 flex flex-col items-center animate-fade-in-up border border-gray-100">
+            <div className="w-16 h-16 bg-blue-50 rounded-full flex items-center justify-center mb-5">
+              <svg className="w-8 h-8 text-blue-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2.5" d="M5 13l4 4L19 7" />
               </svg>
             </div>
-            <h2 className="text-[36px] font-bold text-gray-800 font-kadwa mb-4 text-center">대여 신청 완료</h2>
-            <span className="text-[24px] text-gray-600 font-kadwa mb-8">
-              반납 예정일: {rentSuccessModal.returnDate.toLocaleDateString()}
-            </span>
+            <h2 className="text-[22px] font-bold text-gray-900 mb-2 text-center tracking-tight">대여 신청 완료</h2>
+            <p className="text-[15px] text-gray-600 mb-8 text-center">반납 예정일: <span className="font-bold text-gray-900">{rentSuccessModal.returnDate.toLocaleDateString()}</span></p>
             <button 
-              className="w-full h-[60px] rounded-xl bg-[#0088ff] text-white text-[24px] font-bold hover:bg-blue-600 transition-colors font-kadwa"
+              className="w-full h-[48px] rounded-lg bg-[#2d333a] text-white text-[15px] font-semibold hover:bg-black transition-colors"
               onClick={handleCloseSuccess}
             >
               확인

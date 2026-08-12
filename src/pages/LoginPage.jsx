@@ -13,17 +13,17 @@ export default function LoginPage() {
   const [password, setPassword] = useState('');
   const [errorMsg, setErrorMsg] = useState('');
 
-  const handleLogin = () => {
+  const handleLogin = async () => {
     if (!username || !password) {
-      setErrorMsg('아이디 또는 비밀번호가 일치하지 않습니다');
+      setErrorMsg('아이디 또는 비밀번호가 일치하지 않습니다.');
       return;
     }
     
-    const success = login(username, password);
+    const success = await login(username, password);
     if (success) {
       navigate('/');
     } else {
-      setErrorMsg('아이디 또는 비밀번호가 일치하지 않습니다');
+      setErrorMsg('아이디 또는 비밀번호가 일치하지 않습니다.');
     }
   };
 
@@ -33,53 +33,50 @@ export default function LoginPage() {
   };
 
   return (
-    <div 
-      className="relative mx-auto h-[1080px] w-[1920px] bg-gray-50 overflow-hidden flex items-center justify-center" 
-      style={{ transformOrigin: 'top center', transform: 'scale(max(min(1, 100vw / 1920), 0.5))' }}
-    >
-      <div className="w-[540px] rounded-[24px] bg-white shadow-2xl p-[60px] flex flex-col items-center border border-gray-100 relative">
+    <div className="min-h-screen w-full bg-[#fbfbfb] flex flex-col items-center justify-center font-sans p-6">
+      <div className="w-full max-w-[420px] rounded-2xl bg-white shadow-[0_8px_30px_rgb(0,0,0,0.04)] p-10 flex flex-col items-center border border-gray-200">
         
         {/* Logo and Title */}
-        <div className="flex flex-col items-center gap-6 mb-12">
-          <div className="flex items-center gap-4 cursor-pointer" onClick={() => navigate('/')}>
-            <img src={LOGO_ICON_URL} alt="BookNest Logo" className="h-[72px] w-[72px] object-contain" />
-            <span className="text-[42px] text-black" style={{ fontFamily: 'Kadwa', fontWeight: 700 }}>BookNest</span>
+        <div className="flex flex-col items-center gap-4 mb-10 w-full">
+          <div className="flex items-center gap-3 cursor-pointer group" onClick={() => navigate('/')}>
+            <img src={LOGO_ICON_URL} alt="BookNest Logo" className="h-[40px] w-[40px] object-contain group-hover:opacity-80 transition-opacity" />
+            <span className="text-[28px] text-black font-bold tracking-tight group-hover:text-blue-700 transition-colors">BookNest</span>
           </div>
-          <span className="text-[28px] text-gray-500" style={{ fontFamily: 'Kadwa', fontWeight: 400 }}>
-            로그인
+          <span className="text-[16px] text-gray-500 font-medium mt-2">
+            로그인하여 모든 서비스를 이용해보세요
           </span>
         </div>
 
         {/* Form Fields */}
-        <div className="w-full flex flex-col gap-7 relative">
-          <div className="flex flex-col gap-3">
-            <label className="text-[22px] text-gray-700" style={{ fontFamily: 'Kadwa' }}>아이디</label>
+        <div className="w-full flex flex-col gap-5">
+          <div className="flex flex-col gap-2">
+            <label className="text-[14px] font-medium text-gray-700">아이디</label>
             <input 
               type="text" 
               value={username}
               onChange={handleTyping(setUsername)}
               placeholder="아이디를 입력하세요" 
-              className={`w-full h-[64px] rounded-xl border ${errorMsg ? 'border-red-500' : 'border-gray-300'} px-5 text-[22px] text-black placeholder-gray-400 outline-none focus:border-blue-500 focus:ring-4 focus:ring-blue-100 transition-all`} 
-              style={{ fontFamily: 'Kadwa' }} 
+              className={`w-full h-[48px] rounded-lg border ${errorMsg ? 'border-red-500 bg-red-50/30' : 'border-gray-300'} px-4 text-[15px] text-gray-900 placeholder-gray-400 outline-none focus:border-blue-500 focus:ring-2 focus:ring-blue-100 transition-all`} 
             />
           </div>
 
-          <div className="flex flex-col gap-3">
-            <label className="text-[22px] text-gray-700" style={{ fontFamily: 'Kadwa' }}>비밀번호</label>
+          <div className="flex flex-col gap-2">
+            <label className="text-[14px] font-medium text-gray-700">비밀번호</label>
             <input 
               type="password" 
               value={password}
               onChange={handleTyping(setPassword)}
               onKeyDown={e => e.key === 'Enter' && handleLogin()}
               placeholder="비밀번호를 입력하세요" 
-              className={`w-full h-[64px] rounded-xl border ${errorMsg ? 'border-red-500' : 'border-gray-300'} px-5 text-[22px] text-black placeholder-gray-400 outline-none focus:border-blue-500 focus:ring-4 focus:ring-blue-100 transition-all`} 
-              style={{ fontFamily: 'Kadwa' }} 
+              className={`w-full h-[48px] rounded-lg border ${errorMsg ? 'border-red-500 bg-red-50/30' : 'border-gray-300'} px-4 text-[15px] text-gray-900 placeholder-gray-400 outline-none focus:border-blue-500 focus:ring-2 focus:ring-blue-100 transition-all`} 
             />
           </div>
           
-          <div className="h-[28px] flex items-center justify-center -mb-2">
+          {/* Error Message Space (Fixed height to prevent layout shift) */}
+          <div className="min-h-[24px] flex items-start -mt-1">
             {errorMsg && (
-              <span className="text-red-500 text-[18px] font-kadwa animate-fade-in-up">
+              <span className="text-red-500 text-[13px] font-medium animate-fade-in-up flex items-center gap-1.5">
+                <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M12 8v4m0 4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"></path></svg>
                 {errorMsg}
               </span>
             )}
@@ -87,8 +84,7 @@ export default function LoginPage() {
 
           {/* Login Button */}
           <button 
-            className="w-full h-[70px] mt-2 rounded-xl bg-[#0088ff] flex items-center justify-center text-[28px] text-white hover:bg-blue-600 hover:shadow-lg active:scale-[0.98] transition-all"
-            style={{ fontFamily: 'Kadwa', fontWeight: 700 }}
+            className="w-full h-[52px] rounded-lg bg-[#2d333a] flex items-center justify-center text-[16px] font-semibold text-white hover:bg-black hover:shadow-md active:scale-[0.98] transition-all mt-2"
             onClick={handleLogin}
           >
             로그인
@@ -96,13 +92,12 @@ export default function LoginPage() {
         </div>
 
         {/* Signup Link */}
-        <div className="mt-10 flex items-center gap-3">
-          <span className="text-[22px] text-gray-500" style={{ fontFamily: 'Kadwa' }}>
-            계정이 없으신가요?
+        <div className="mt-8 pt-6 w-full border-t border-gray-100 flex items-center justify-center gap-2">
+          <span className="text-[14px] text-gray-500">
+            아직 계정이 없으신가요?
           </span>
           <button 
-            className="text-[22px] text-[#0088ff] hover:text-blue-700 hover:underline transition-colors" 
-            style={{ fontFamily: 'Kadwa' }}
+            className="text-[14px] font-semibold text-blue-600 hover:text-blue-800 transition-colors" 
             onClick={() => navigate('/signup')}
           >
             회원가입
