@@ -8,25 +8,36 @@ class User(Base):
     __tablename__ = "users"
 
     id = Column(Integer, primary_key=True, index=True)
-    # DB의 실제 컬럼명은 username이지만, 파이썬 코드(main.py, schemas.py)에서는
-    # login_id로 통일해서 쓰고 있어서 여기서 이름만 매핑해줌
-    login_id = Column("username", String(50), unique=True, nullable=False, index=True)
+    login_id = Column(String(50), unique=True, nullable=False, index=True)
     password = Column(String(255), nullable=False)
     name = Column(String(50), nullable=False)
     phone_number = Column(String(20), nullable=False)
     created_at = Column(DateTime(timezone=True), server_default=func.now())
 
+    # 회원가입 추가 항목 (아이디/비밀번호 찾기, 휴면 해제 본인확인에 사용)
+    # 기존 회원은 값이 없을 수 있어 nullable=True로 둠 (마이페이지에서 나중에 채울 수 있음)
+    email = Column(String(100), nullable=True)
+    address = Column(String(200), nullable=True)
+
+    # 휴면 계정 처리용
+    last_login_at = Column(DateTime(timezone=True), nullable=True)
+    is_active = Column(Boolean, nullable=False, default=True)  # False면 휴면 처리된 계정
+
+    # 관리자 여부
+    is_admin = Column(Boolean, nullable=False, default=False)
+
+    # 연체 페널티 — 이 날짜까지 대여 금지 (NULL이면 제한 없음)
+    rental_banned_until = Column(Date, nullable=True)
+
 
 class Author(Base):
     __tablename__ = "authors"
-
     id = Column(Integer, primary_key=True, index=True)
     name = Column(String(100), nullable=False)
 
 
 class Genre(Base):
     __tablename__ = "genres"
-
     id = Column(Integer, primary_key=True, index=True)
     name = Column(String(50), unique=True, nullable=False)
 
@@ -44,8 +55,6 @@ class Book(Base):
     is_bestseller = Column(Boolean, nullable=False, default=False)
     created_at = Column(DateTime(timezone=True), server_default=func.now())
 
-    # author.name, genre.name 처럼 바로 접근할 수 있게 해주는 관계 설정
-    # (실제 DB에 컬럼이 추가되는 건 아니고, 파이썬에서 편하게 쓰기 위한 것)
     author = relationship("Author")
     genre = relationship("Genre")
 
@@ -58,6 +67,6 @@ class Rental(Base):
     book_id = Column(Integer, ForeignKey("books.id"), nullable=False)
     rental_date = Column(Date, nullable=False)
     due_date = Column(Date, nullable=False)
-    return_date = Column(Date, nullable=True)  # 반납 전이면 NULL
+    return_date = Column(Date, nullable=True)
 
     book = relationship("Book")
