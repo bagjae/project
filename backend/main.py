@@ -457,6 +457,7 @@ def activate_user(
     if not user:
         raise HTTPException(status_code=404, detail="해당 사용자를 찾을 수 없습니다")
     user.is_active = True
+    user.last_login_at = datetime.utcnow()
     db.commit()
     db.refresh(user)
     return user
@@ -476,3 +477,12 @@ def deactivate_user(
     db.commit()
     db.refresh(user)
     return user
+
+
+
+@app.get("/admin/users", response_model=list[schemas.UserListItem])
+def get_all_users(
+    db: Session = Depends(get_db),
+    admin: models.User = Depends(auth.get_current_admin),
+):
+    return db.query(models.User).all()
