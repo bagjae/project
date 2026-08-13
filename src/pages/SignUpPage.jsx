@@ -54,6 +54,7 @@ export default function SignUpPage() {
     if (result.success) {
       setShowWelcome(true);
     } else {
+      console.log(result.error);
       alert(result.error);
     }
   };

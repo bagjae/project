@@ -1,15 +1,18 @@
 from datetime import date
 from pydantic import BaseModel
+from typing import Optional
 
 
 # 회원가입 요청 시 프론트엔드가 보내야 하는 값
+
+
 class UserCreate(BaseModel):
     login_id: str
     password: str
     name: str
     phone_number: str
-    email: str
-    address: str
+    email: Optional[str] = None
+    address: Optional[str] = None
 
 
 # 로그인 요청 시 프론트엔드가 보내야 하는 값
