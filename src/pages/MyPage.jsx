@@ -4,12 +4,24 @@ import { useAuth } from '../contexts/AuthContext';
 import { useNavigate } from 'react-router-dom';
 
 export default function MyPage() {
-  const { currentUser, returnBook } = useAuth();
+  const { currentUser, returnBook, updateProfile, changePassword } = useAuth();
   const navigate = useNavigate();
   
   const [mypageData, setMypageData] = useState(null);
   const [loading, setLoading] = useState(true);
   const [expandedBooks, setExpandedBooks] = useState({});
+
+  // Modals for Profile Edit & Password Change
+  const [isEditProfileOpen, setIsEditProfileOpen] = useState(false);
+  const [isChangePasswordOpen, setIsChangePasswordOpen] = useState(false);
+
+  const [editName, setEditName] = useState('');
+  const [editPhone, setEditPhone] = useState('');
+
+  const [currentPassword, setCurrentPassword] = useState('');
+  const [newPassword, setNewPassword] = useState('');
+  const [confirmPassword, setConfirmPassword] = useState('');
+  const [modalMsg, setModalMsg] = useState('');
 
   useEffect(() => {
     if (!currentUser) {
@@ -19,13 +31,33 @@ export default function MyPage() {
 
     const fetchMyPage = async () => {
       try {
-        const res = await fetch(`http://192.168.1.212:8000/users/${currentUser.id}/mypage`);
+        const headers = currentUser?.token ? { 'Authorization': `Bearer ${currentUser.token}` } : {};
+        let res = await fetch(`http://192.168.1.212:8000/users/me/mypage`, { headers });
+        if (!res.ok) {
+          res = await fetch(`http://192.168.1.212:8000/users/${currentUser.id}/mypage`, { headers });
+        }
         if (res.ok) {
           const data = await res.json();
           setMypageData(data);
+        } else {
+          // Fallback structure if server error
+          setMypageData({
+            name: currentUser.name,
+            login_id: currentUser.username,
+            rental_banned_until: currentUser.rental_banned_until,
+            current_rentals: [],
+            past_rentals: []
+          });
         }
       } catch (err) {
         console.error("마이페이지 정보 불러오기 실패:", err);
+        setMypageData({
+          name: currentUser.name,
+          login_id: currentUser.username,
+          rental_banned_until: currentUser.rental_banned_until,
+          current_rentals: [],
+          past_rentals: []
+        });
       }
       setLoading(false);
     };
@@ -41,6 +73,49 @@ export default function MyPage() {
 
   const toggleExpand = (title) => {
     setExpandedBooks(prev => ({ ...prev, [title]: !prev[title] }));
+  };
+
+  const openProfileModal = () => {
+    setEditName(currentUser?.name || mypageData?.name || '');
+    setEditPhone(currentUser?.phone_number || '');
+    setModalMsg('');
+    setIsEditProfileOpen(true);
+  };
+
+  const handleSaveProfile = async () => {
+    if (!editName) {
+      setModalMsg('이름을 입력해 주세요.');
+      return;
+    }
+    const res = await updateProfile({ name: editName, phone_number: editPhone });
+    if (res.success) {
+      alert("프로필이 수정되었습니다.");
+      setIsEditProfileOpen(false);
+      setMypageData(prev => ({ ...prev, name: editName }));
+    } else {
+      setModalMsg(res.message);
+    }
+  };
+
+  const handleSavePassword = async () => {
+    if (!currentPassword || !newPassword) {
+      setModalMsg('모든 비밀번호 항목을 입력해 주세요.');
+      return;
+    }
+    if (newPassword !== confirmPassword) {
+      setModalMsg('새 비밀번호가 서로 일치하지 않습니다.');
+      return;
+    }
+    const res = await changePassword(currentPassword, newPassword);
+    if (res.success) {
+      alert("비밀번호가 변경되었습니다.");
+      setIsChangePasswordOpen(false);
+      setCurrentPassword('');
+      setNewPassword('');
+      setConfirmPassword('');
+    } else {
+      setModalMsg(res.message);
+    }
   };
 
   if (!currentUser || loading) return (
@@ -64,6 +139,10 @@ export default function MyPage() {
   const activeRentals = mypageData.current_rentals || [];
   const pastRentals = mypageData.past_rentals || [];
 
+  // Check if user is currently banned from renting due to overdue penalty
+  const bannedUntilStr = mypageData.rental_banned_until || currentUser.rental_banned_until;
+  const isBanned = bannedUntilStr && new Date(bannedUntilStr) > new Date();
+
   // Group past rentals by book title for the UI
   const groupedPastRentals = Object.values(
     pastRentals.reduce((acc, rental) => {
@@ -79,11 +158,9 @@ export default function MyPage() {
       return acc;
     }, {})
   ).map(group => {
-    // Sort history by returnDate descending (most recent first)
     group.history.sort((a, b) => new Date(b.return_date) - new Date(a.return_date));
     return group;
   }).sort((a, b) => {
-    // Sort groups by their most recent return date
     return new Date(b.history[0].return_date) - new Date(a.history[0].return_date);
   });
 
@@ -96,13 +173,25 @@ export default function MyPage() {
         {/* Profile Sidebar */}
         <aside className="w-full lg:w-[320px] shrink-0">
           <div className="bg-white rounded-2xl shadow-[0_4px_20px_rgba(0,0,0,0.04)] p-8 flex flex-col items-center border border-gray-100">
-            <div className="w-24 h-24 rounded-full bg-blue-50 flex items-center justify-center mb-5 border border-blue-100">
-              <span className="text-[32px] font-bold text-blue-600">{mypageData.name[0]}</span>
+            <div className="w-24 h-24 rounded-full bg-blue-50 flex items-center justify-center mb-5 border border-blue-100 relative">
+              <span className="text-[32px] font-bold text-blue-600">{mypageData.name ? mypageData.name[0] : 'U'}</span>
             </div>
             <h2 className="text-[22px] font-bold text-gray-900 mb-1">{mypageData.name} 님</h2>
-            <span className="text-[14px] text-gray-500 font-medium mb-8">@{mypageData.login_id}</span>
+            <span className="text-[14px] text-gray-500 font-medium mb-6">@{mypageData.login_id}</span>
             
-            <div className="w-full flex flex-col gap-5 border-t border-gray-100 pt-6">
+            {/* Penalty Badge */}
+            {isBanned && (
+              <div className="w-full bg-red-50 border border-red-200 rounded-xl p-3 mb-6 flex flex-col items-center text-center">
+                <span className="text-red-700 font-bold text-[13px] flex items-center gap-1">
+                  ⚠️ 대여 정지 상태
+                </span>
+                <span className="text-red-600 text-[12px] mt-1">
+                  {bannedUntilStr}까지 대여 불가능
+                </span>
+              </div>
+            )}
+
+            <div className="w-full flex flex-col gap-4 border-t border-gray-100 pt-6">
               <div className="flex justify-between items-center">
                 <span className="text-[14px] text-gray-600 font-medium">현재 대여 중</span>
                 <span className="text-[18px] font-bold text-blue-600">{activeRentals.length} 권</span>
@@ -112,12 +201,43 @@ export default function MyPage() {
                 <span className="text-[18px] font-bold text-gray-900">{pastRentals.length} 권</span>
               </div>
             </div>
+
+            {/* Profile Action Buttons */}
+            <div className="w-full flex flex-col gap-2.5 border-t border-gray-100 pt-6 mt-6">
+              <button
+                onClick={openProfileModal}
+                className="w-full py-2.5 bg-gray-50 hover:bg-gray-100 text-gray-700 font-medium text-[14px] rounded-xl border border-gray-200 transition-colors"
+              >
+                내 정보 수정
+              </button>
+              <button
+                onClick={() => { setIsChangePasswordOpen(true); setModalMsg(''); }}
+                className="w-full py-2.5 bg-gray-50 hover:bg-gray-100 text-gray-700 font-medium text-[14px] rounded-xl border border-gray-200 transition-colors"
+              >
+                비밀번호 변경
+              </button>
+            </div>
           </div>
         </aside>
 
         {/* Content Area */}
         <div className="flex-1 flex flex-col gap-8">
           
+          {/* Overdue Penalty Banner */}
+          {isBanned && (
+            <div className="bg-red-500 text-white rounded-2xl p-6 shadow-md flex items-center justify-between">
+              <div className="flex items-center gap-4">
+                <svg className="w-8 h-8 text-white shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z"></path>
+                </svg>
+                <div>
+                  <h4 className="text-[18px] font-bold">연체 페널티로 인한 도서 대여 정지 안내</h4>
+                  <p className="text-[14px] opacity-90">반납 기한 지연으로 인해 <strong>{bannedUntilStr}</strong>까지 신규 도서 대여가 정지된 상태입니다.</p>
+                </div>
+              </div>
+            </div>
+          )}
+
           {/* Active Rentals */}
           <div className="bg-white rounded-2xl shadow-[0_4px_20px_rgba(0,0,0,0.04)] p-8 border border-gray-100">
             <h3 className="text-[20px] font-bold text-gray-900 mb-6 tracking-tight">현재 대여 중인 도서</h3>
@@ -141,7 +261,7 @@ export default function MyPage() {
                         <div className="flex flex-col sm:items-end gap-1">
                           {isOverdue ? (
                             <span className="bg-red-50 text-red-600 px-2.5 py-1 rounded text-[13px] font-bold border border-red-100 inline-block w-fit">
-                              {diffDays}일 연체됨
+                              {diffDays}일 연체됨 (반납 시 {diffDays}일 대여 정지)
                             </span>
                           ) : (
                             <span className="bg-blue-50 text-blue-600 px-2.5 py-1 rounded text-[13px] font-bold border border-blue-100 inline-block w-fit">
@@ -226,6 +346,78 @@ export default function MyPage() {
           </div>
         </div>
       </main>
+
+      {/* Edit Profile Modal */}
+      {isEditProfileOpen && (
+        <div className="fixed inset-0 bg-black/40 backdrop-blur-sm z-50 flex items-center justify-center p-4">
+          <div className="bg-white rounded-2xl p-7 w-full max-w-[420px] shadow-2xl border border-gray-100 flex flex-col gap-4">
+            <h3 className="text-[20px] font-bold text-gray-900">내 정보 수정</h3>
+            <div className="flex flex-col gap-3 mt-1">
+              <div>
+                <label className="text-[13px] font-medium text-gray-600 mb-1 block">이름</label>
+                <input
+                  type="text"
+                  value={editName}
+                  onChange={e => setEditName(e.target.value)}
+                  className="w-full h-11 border border-gray-300 rounded-lg px-3.5 text-[14px] outline-none focus:border-blue-500"
+                />
+              </div>
+              <div>
+                <label className="text-[13px] font-medium text-gray-600 mb-1 block">전화번호</label>
+                <input
+                  type="text"
+                  placeholder="예: 010-1234-5678"
+                  value={editPhone}
+                  onChange={e => setEditPhone(e.target.value)}
+                  className="w-full h-11 border border-gray-300 rounded-lg px-3.5 text-[14px] outline-none focus:border-blue-500"
+                />
+              </div>
+            </div>
+            {modalMsg && <p className="text-red-500 text-[13px]">{modalMsg}</p>}
+            <div className="flex justify-end gap-2 mt-2">
+              <button onClick={() => setIsEditProfileOpen(false)} className="px-4 py-2 border border-gray-300 rounded-lg text-[14px] font-medium text-gray-600 hover:bg-gray-50">취소</button>
+              <button onClick={handleSaveProfile} className="px-4 py-2 bg-blue-600 text-white rounded-lg text-[14px] font-medium hover:bg-blue-700">저장하기</button>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* Change Password Modal */}
+      {isChangePasswordOpen && (
+        <div className="fixed inset-0 bg-black/40 backdrop-blur-sm z-50 flex items-center justify-center p-4">
+          <div className="bg-white rounded-2xl p-7 w-full max-w-[420px] shadow-2xl border border-gray-100 flex flex-col gap-4">
+            <h3 className="text-[20px] font-bold text-gray-900">비밀번호 변경</h3>
+            <div className="flex flex-col gap-3 mt-1">
+              <input
+                type="password"
+                placeholder="현재 비밀번호"
+                value={currentPassword}
+                onChange={e => setCurrentPassword(e.target.value)}
+                className="w-full h-11 border border-gray-300 rounded-lg px-3.5 text-[14px] outline-none focus:border-blue-500"
+              />
+              <input
+                type="password"
+                placeholder="새 비밀번호"
+                value={newPassword}
+                onChange={e => setNewPassword(e.target.value)}
+                className="w-full h-11 border border-gray-300 rounded-lg px-3.5 text-[14px] outline-none focus:border-blue-500"
+              />
+              <input
+                type="password"
+                placeholder="새 비밀번호 확인"
+                value={confirmPassword}
+                onChange={e => setConfirmPassword(e.target.value)}
+                className="w-full h-11 border border-gray-300 rounded-lg px-3.5 text-[14px] outline-none focus:border-blue-500"
+              />
+            </div>
+            {modalMsg && <p className="text-red-500 text-[13px]">{modalMsg}</p>}
+            <div className="flex justify-end gap-2 mt-2">
+              <button onClick={() => setIsChangePasswordOpen(false)} className="px-4 py-2 border border-gray-300 rounded-lg text-[14px] font-medium text-gray-600 hover:bg-gray-50">취소</button>
+              <button onClick={handleSavePassword} className="px-4 py-2 bg-blue-600 text-white rounded-lg text-[14px] font-medium hover:bg-blue-700">변경하기</button>
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   );
 }

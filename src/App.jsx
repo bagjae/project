@@ -6,6 +6,7 @@ import LoginPage from './pages/LoginPage';
 import SignUpPage from './pages/SignUpPage';
 import SearchResultsPage from './pages/SearchResultsPage';
 import MyPage from './pages/MyPage';
+import AdminPage from './pages/AdminPage';
 
 function App() {
   return (
@@ -17,6 +18,7 @@ function App() {
           <Route path="/signup" element={<SignUpPage />} />
           <Route path="/search" element={<SearchResultsPage />} />
           <Route path="/mypage" element={<MyPage />} />
+          <Route path="/admin" element={<AdminPage />} />
         </Routes>
       </BrowserRouter>
     </AuthProvider>
