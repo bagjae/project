@@ -122,23 +122,30 @@ export function AuthProvider({ children }) {
   };
 
   // 휴면 계정 해제 API
-  const reactivateUser = async (loginId, name, phoneNumber) => {
-    try {
-      const response = await fetch(`${BASE_URL}/users/reactivate`, {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ login_id: loginId, name, phone_number: phoneNumber })
-      });
-      if (!response.ok) {
-        const errData = await response.json().catch(() => ({}));
-        return { success: false, message: errData.detail || "휴면 해제 정보가 일치하지 않습니다." };
-      }
-      return { success: true, message: "계정이 성공적으로 재활성화되었습니다. 로그인해 주세요!" };
-    } catch (err) {
-      console.error(err);
-      return { success: false, message: "서버와 연결할 수 없습니다." };
+  // 휴면 계정 해제 API
+const reactivateUser = async (loginId, name, phoneNumber, email, address) => {
+  try {
+    const response = await fetch(`${BASE_URL}/users/reactivate`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ 
+        login_id: loginId, 
+        name, 
+        phone_number: phoneNumber,
+        email,
+        address
+      })
+    });
+    if (!response.ok) {
+      const errData = await response.json().catch(() => ({}));
+      return { success: false, message: errData.detail || "휴면 해제 정보가 일치하지 않습니다." };
     }
-  };
+    return { success: true, message: "계정이 성공적으로 재활성화되었습니다. 로그인해 주세요!" };
+  } catch (err) {
+    console.error(err);
+    return { success: false, message: "서버와 연결할 수 없습니다." };
+  }
+};
 
   // 아이디 찾기 API
   const findId = async (name, phoneNumber) => {

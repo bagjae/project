@@ -19,6 +19,8 @@ export default function LoginPage() {
   // Form states for modals
   const [modalName, setModalName] = useState('');
   const [modalPhone, setModalPhone] = useState('');
+  const [modalEmail, setModalEmail] = useState('');
+  const [modalAddress, setModalAddress] = useState('');
   const [modalUsername, setModalUsername] = useState('');
   const [modalNewPassword, setModalNewPassword] = useState('');
   const [modalMsg, setModalMsg] = useState('');
@@ -81,16 +83,16 @@ export default function LoginPage() {
   };
 
   const handleReactivate = async () => {
-    if (!modalUsername || !modalName || !modalPhone) {
-      setModalMsg('모든 정보를 입력하세요.');
-      return;
-    }
-    const res = await reactivateUser(modalUsername, modalName, modalPhone);
-    setModalMsg(res.message);
-    if (res.success) {
-      setTimeout(() => closeModal(), 2000);
-    }
-  };
+  if (!modalUsername || !modalName || !modalPhone || !modalEmail || !modalAddress) {
+    setModalMsg('모든 정보를 입력하세요.');
+    return;
+  }
+  const res = await reactivateUser(modalUsername, modalName, modalPhone, modalEmail, modalAddress);
+  setModalMsg(res.message);
+  if (res.success) {
+    setTimeout(() => closeModal(), 2000);
+  }
+};
 
   return (
     <div className="min-h-screen w-full bg-[#fbfbfb] flex flex-col items-center justify-center font-sans p-6">
@@ -205,6 +207,20 @@ export default function LoginPage() {
                     onChange={e => setModalPhone(e.target.value)}
                     className="w-full h-11 border border-gray-300 rounded-lg px-3.5 text-[14px] outline-none focus:border-blue-500"
                   />
+                  <input
+  type="email"
+  placeholder="이메일"
+  value={modalEmail}
+  onChange={e => setModalEmail(e.target.value)}
+  className="w-full h-11 border border-gray-300 rounded-lg px-3.5 text-[14px] outline-none focus:border-blue-500"
+/>
+<input
+  type="text"
+  placeholder="집 주소"
+  value={modalAddress}
+  onChange={e => setModalAddress(e.target.value)}
+  className="w-full h-11 border border-gray-300 rounded-lg px-3.5 text-[14px] outline-none focus:border-blue-500"
+/>
                 </div>
                 {foundIdResult ? (
                   <div className="p-3 bg-blue-50 border border-blue-200 rounded-lg text-blue-700 text-center font-bold text-[15px]">
