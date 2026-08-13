@@ -17,6 +17,8 @@ export default function MyPage() {
 
   const [editName, setEditName] = useState('');
   const [editPhone, setEditPhone] = useState('');
+  const [editEmail, setEditEmail] = useState('');
+  const [editAddress, setEditAddress] = useState('');
 
   const [currentPassword, setCurrentPassword] = useState('');
   const [newPassword, setNewPassword] = useState('');
@@ -40,7 +42,6 @@ export default function MyPage() {
           const data = await res.json();
           setMypageData(data);
         } else {
-          // Fallback structure if server error
           setMypageData({
             name: currentUser.name,
             login_id: currentUser.username,
@@ -78,6 +79,8 @@ export default function MyPage() {
   const openProfileModal = () => {
     setEditName(currentUser?.name || mypageData?.name || '');
     setEditPhone(currentUser?.phone_number || '');
+    setEditEmail(currentUser?.email || '');
+    setEditAddress(currentUser?.address || '');
     setModalMsg('');
     setIsEditProfileOpen(true);
   };
@@ -87,9 +90,14 @@ export default function MyPage() {
       setModalMsg('이름을 입력해 주세요.');
       return;
     }
-    const res = await updateProfile({ name: editName, phone_number: editPhone });
+    const res = await updateProfile({
+      name: editName,
+      phone_number: editPhone,
+      email: editEmail,
+      address: editAddress
+    });
     if (res.success) {
-      alert("프로필이 수정되었습니다.");
+      alert("개인정보가 성공적으로 수정되었습니다.");
       setIsEditProfileOpen(false);
       setMypageData(prev => ({ ...prev, name: editName }));
     } else {
@@ -108,7 +116,7 @@ export default function MyPage() {
     }
     const res = await changePassword(currentPassword, newPassword);
     if (res.success) {
-      alert("비밀번호가 변경되었습니다.");
+      alert("비밀번호가 성공적으로 변경되었습니다.");
       setIsChangePasswordOpen(false);
       setCurrentPassword('');
       setNewPassword('');
@@ -171,13 +179,29 @@ export default function MyPage() {
       <main className="flex-1 w-full max-w-7xl mx-auto px-6 py-10 flex flex-col lg:flex-row gap-8">
         
         {/* Profile Sidebar */}
-        <aside className="w-full lg:w-[320px] shrink-0">
+        <aside className="w-full lg:w-[340px] shrink-0">
           <div className="bg-white rounded-2xl shadow-[0_4px_20px_rgba(0,0,0,0.04)] p-8 flex flex-col items-center border border-gray-100">
             <div className="w-24 h-24 rounded-full bg-blue-50 flex items-center justify-center mb-5 border border-blue-100 relative">
               <span className="text-[32px] font-bold text-blue-600">{mypageData.name ? mypageData.name[0] : 'U'}</span>
             </div>
             <h2 className="text-[22px] font-bold text-gray-900 mb-1">{mypageData.name} 님</h2>
-            <span className="text-[14px] text-gray-500 font-medium mb-6">@{mypageData.login_id}</span>
+            <span className="text-[14px] text-gray-500 font-medium mb-4">@{mypageData.login_id}</span>
+
+            {/* Profile Info Details */}
+            <div className="w-full bg-gray-50 rounded-xl p-4 mb-6 flex flex-col gap-2 border border-gray-100 text-[13.5px]">
+              <div className="flex justify-between">
+                <span className="text-gray-500 font-medium">전화번호</span>
+                <span className="text-gray-900 font-semibold">{currentUser?.phone_number || '-'}</span>
+              </div>
+              <div className="flex justify-between">
+                <span className="text-gray-500 font-medium">이메일</span>
+                <span className="text-gray-900 font-semibold truncate max-w-[170px]">{currentUser?.email || '-'}</span>
+              </div>
+              <div className="flex justify-between">
+                <span className="text-gray-500 font-medium">집 주소</span>
+                <span className="text-gray-900 font-semibold truncate max-w-[170px]">{currentUser?.address || '-'}</span>
+              </div>
+            </div>
             
             {/* Penalty Badge */}
             {isBanned && (
@@ -208,7 +232,7 @@ export default function MyPage() {
                 onClick={openProfileModal}
                 className="w-full py-2.5 bg-gray-50 hover:bg-gray-100 text-gray-700 font-medium text-[14px] rounded-xl border border-gray-200 transition-colors"
               >
-                내 정보 수정
+                개인정보 수정 (이름/전화번호/이메일/주소)
               </button>
               <button
                 onClick={() => { setIsChangePasswordOpen(true); setModalMsg(''); }}
@@ -261,7 +285,7 @@ export default function MyPage() {
                         <div className="flex flex-col sm:items-end gap-1">
                           {isOverdue ? (
                             <span className="bg-red-50 text-red-600 px-2.5 py-1 rounded text-[13px] font-bold border border-red-100 inline-block w-fit">
-                              {diffDays}일 연체됨 (반납 시 {diffDays}일 대여 정지)
+                              {diffDays}일 연체됨 (반납 시 {diffDays}일 대여 정지 누적)
                             </span>
                           ) : (
                             <span className="bg-blue-50 text-blue-600 px-2.5 py-1 rounded text-[13px] font-bold border border-blue-100 inline-block w-fit">
@@ -350,8 +374,9 @@ export default function MyPage() {
       {/* Edit Profile Modal */}
       {isEditProfileOpen && (
         <div className="fixed inset-0 bg-black/40 backdrop-blur-sm z-50 flex items-center justify-center p-4">
-          <div className="bg-white rounded-2xl p-7 w-full max-w-[420px] shadow-2xl border border-gray-100 flex flex-col gap-4">
-            <h3 className="text-[20px] font-bold text-gray-900">내 정보 수정</h3>
+          <div className="bg-white rounded-2xl p-7 w-full max-w-[440px] shadow-2xl border border-gray-100 flex flex-col gap-4">
+            <h3 className="text-[20px] font-bold text-gray-900">개인정보 수정</h3>
+            <p className="text-[13px] text-gray-500">아이디는 변경이 불가능하며, 기타 개인정보를 수정할 수 있습니다.</p>
             <div className="flex flex-col gap-3 mt-1">
               <div>
                 <label className="text-[13px] font-medium text-gray-600 mb-1 block">이름</label>
@@ -372,6 +397,26 @@ export default function MyPage() {
                   className="w-full h-11 border border-gray-300 rounded-lg px-3.5 text-[14px] outline-none focus:border-blue-500"
                 />
               </div>
+              <div>
+                <label className="text-[13px] font-medium text-gray-600 mb-1 block">이메일</label>
+                <input
+                  type="email"
+                  placeholder="예: user@example.com"
+                  value={editEmail}
+                  onChange={e => setEditEmail(e.target.value)}
+                  className="w-full h-11 border border-gray-300 rounded-lg px-3.5 text-[14px] outline-none focus:border-blue-500"
+                />
+              </div>
+              <div>
+                <label className="text-[13px] font-medium text-gray-600 mb-1 block">집 주소</label>
+                <input
+                  type="text"
+                  placeholder="집 주소 입력"
+                  value={editAddress}
+                  onChange={e => setEditAddress(e.target.value)}
+                  className="w-full h-11 border border-gray-300 rounded-lg px-3.5 text-[14px] outline-none focus:border-blue-500"
+                />
+              </div>
             </div>
             {modalMsg && <p className="text-red-500 text-[13px]">{modalMsg}</p>}
             <div className="flex justify-end gap-2 mt-2">
@@ -387,6 +432,7 @@ export default function MyPage() {
         <div className="fixed inset-0 bg-black/40 backdrop-blur-sm z-50 flex items-center justify-center p-4">
           <div className="bg-white rounded-2xl p-7 w-full max-w-[420px] shadow-2xl border border-gray-100 flex flex-col gap-4">
             <h3 className="text-[20px] font-bold text-gray-900">비밀번호 변경</h3>
+            <p className="text-[13px] text-gray-500">현재 비밀번호를 확인한 후 새로운 비밀번호로 변경합니다.</p>
             <div className="flex flex-col gap-3 mt-1">
               <input
                 type="password"

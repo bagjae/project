@@ -16,7 +16,7 @@ export default function LoginPage() {
   // Active modal type: 'findId' | 'resetPassword' | 'reactivate' | null
   const [activeModal, setActiveModal] = useState(null);
 
-  // Form states for modals
+  // Form states for modals (name, phone, email, address, username, newPassword)
   const [modalName, setModalName] = useState('');
   const [modalPhone, setModalPhone] = useState('');
   const [modalEmail, setModalEmail] = useState('');
@@ -50,6 +50,8 @@ export default function LoginPage() {
     setActiveModal(null);
     setModalName('');
     setModalPhone('');
+    setModalEmail('');
+    setModalAddress('');
     setModalUsername('');
     setModalNewPassword('');
     setModalMsg('');
@@ -57,11 +59,11 @@ export default function LoginPage() {
   };
 
   const handleFindId = async () => {
-    if (!modalName || !modalPhone) {
-      setModalMsg('이름과 전화번호를 입력하세요.');
+    if (!modalName || !modalPhone || !modalEmail || !modalAddress) {
+      setModalMsg('본인 확인을 위해 이름, 전화번호, 이메일, 집 주소를 모두 입력해주세요.');
       return;
     }
-    const res = await findId(modalName, modalPhone);
+    const res = await findId(modalName, modalPhone, modalEmail, modalAddress);
     if (res.success) {
       setFoundIdResult(res.login_id);
       setModalMsg('');
@@ -71,11 +73,11 @@ export default function LoginPage() {
   };
 
   const handleResetPassword = async () => {
-    if (!modalUsername || !modalName || !modalPhone || !modalNewPassword) {
-      setModalMsg('모든 정보를 입력하세요.');
+    if (!modalUsername || !modalName || !modalPhone || !modalEmail || !modalAddress || !modalNewPassword) {
+      setModalMsg('본인 확인을 위해 모든 항목 및 새 비밀번호를 입력해주세요.');
       return;
     }
-    const res = await resetPassword(modalUsername, modalName, modalPhone, modalNewPassword);
+    const res = await resetPassword(modalUsername, modalName, modalPhone, modalEmail, modalAddress, modalNewPassword);
     setModalMsg(res.message);
     if (res.success) {
       setTimeout(() => closeModal(), 2000);
@@ -83,16 +85,16 @@ export default function LoginPage() {
   };
 
   const handleReactivate = async () => {
-  if (!modalUsername || !modalName || !modalPhone || !modalEmail || !modalAddress) {
-    setModalMsg('모든 정보를 입력하세요.');
-    return;
-  }
-  const res = await reactivateUser(modalUsername, modalName, modalPhone, modalEmail, modalAddress);
-  setModalMsg(res.message);
-  if (res.success) {
-    setTimeout(() => closeModal(), 2000);
-  }
-};
+    if (!modalUsername || !modalName || !modalPhone || !modalEmail || !modalAddress) {
+      setModalMsg('본인 확인을 위해 아이디, 이름, 전화번호, 이메일, 집 주소를 모두 입력해주세요.');
+      return;
+    }
+    const res = await reactivateUser(modalUsername, modalName, modalPhone, modalEmail, modalAddress);
+    setModalMsg(res.message);
+    if (res.success) {
+      setTimeout(() => closeModal(), 2000);
+    }
+  };
 
   return (
     <div className="min-h-screen w-full bg-[#fbfbfb] flex flex-col items-center justify-center font-sans p-6">
@@ -153,8 +155,8 @@ export default function LoginPage() {
           </button>
         </div>
 
-        {/* Sub Links (Find ID / Reset Password) */}
-        <div className="mt-5 w-full flex items-center justify-center gap-4 text-[13px] text-gray-500">
+        {/* Sub Links (Find ID / Reset Password / Reactivate) */}
+        <div className="mt-5 w-full flex items-center justify-center gap-3 text-[13px] text-gray-500">
           <button onClick={() => { closeModal(); setActiveModal('findId'); }} className="hover:text-blue-600 font-medium">
             아이디 찾기
           </button>
@@ -185,13 +187,13 @@ export default function LoginPage() {
       {/* Modal Dialogs */}
       {activeModal && (
         <div className="fixed inset-0 bg-black/40 backdrop-blur-sm z-50 flex items-center justify-center p-4">
-          <div className="bg-white rounded-2xl p-7 w-full max-w-[420px] shadow-2xl border border-gray-100 flex flex-col gap-4">
+          <div className="bg-white rounded-2xl p-7 w-full max-w-[460px] shadow-2xl border border-gray-100 flex flex-col gap-4 max-h-[90vh] overflow-y-auto custom-scrollbar">
             
             {/* Find ID Modal */}
             {activeModal === 'findId' && (
               <>
                 <h3 className="text-[20px] font-bold text-gray-900">아이디 찾기</h3>
-                <p className="text-[14px] text-gray-500">가입 시 등록한 이름과 전화번호를 입력해주세요.</p>
+                <p className="text-[14px] text-gray-500">본인 확인을 위해 가입 시 등록한 정보를 입력해 주세요.</p>
                 <div className="flex flex-col gap-3 mt-1">
                   <input
                     type="text"
@@ -208,23 +210,23 @@ export default function LoginPage() {
                     className="w-full h-11 border border-gray-300 rounded-lg px-3.5 text-[14px] outline-none focus:border-blue-500"
                   />
                   <input
-  type="email"
-  placeholder="이메일"
-  value={modalEmail}
-  onChange={e => setModalEmail(e.target.value)}
-  className="w-full h-11 border border-gray-300 rounded-lg px-3.5 text-[14px] outline-none focus:border-blue-500"
-/>
-<input
-  type="text"
-  placeholder="집 주소"
-  value={modalAddress}
-  onChange={e => setModalAddress(e.target.value)}
-  className="w-full h-11 border border-gray-300 rounded-lg px-3.5 text-[14px] outline-none focus:border-blue-500"
-/>
+                    type="email"
+                    placeholder="이메일 (예: user@example.com)"
+                    value={modalEmail}
+                    onChange={e => setModalEmail(e.target.value)}
+                    className="w-full h-11 border border-gray-300 rounded-lg px-3.5 text-[14px] outline-none focus:border-blue-500"
+                  />
+                  <input
+                    type="text"
+                    placeholder="집 주소"
+                    value={modalAddress}
+                    onChange={e => setModalAddress(e.target.value)}
+                    className="w-full h-11 border border-gray-300 rounded-lg px-3.5 text-[14px] outline-none focus:border-blue-500"
+                  />
                 </div>
                 {foundIdResult ? (
-                  <div className="p-3 bg-blue-50 border border-blue-200 rounded-lg text-blue-700 text-center font-bold text-[15px]">
-                    고객님의 아이디: {foundIdResult}
+                  <div className="p-4 bg-blue-50 border border-blue-200 rounded-lg text-blue-700 text-center font-bold text-[16px]">
+                    고객님의 아이디: <span className="underline">{foundIdResult}</span>
                   </div>
                 ) : (
                   modalMsg && <p className="text-red-500 text-[13px]">{modalMsg}</p>
@@ -232,7 +234,7 @@ export default function LoginPage() {
                 <div className="flex justify-end gap-2 mt-2">
                   <button onClick={closeModal} className="px-4 py-2 border border-gray-300 rounded-lg text-[14px] font-medium text-gray-600 hover:bg-gray-50">닫기</button>
                   {!foundIdResult && (
-                    <button onClick={handleFindId} className="px-4 py-2 bg-blue-600 text-white rounded-lg text-[14px] font-medium hover:bg-blue-700">찾기</button>
+                    <button onClick={handleFindId} className="px-4 py-2 bg-blue-600 text-white rounded-lg text-[14px] font-medium hover:bg-blue-700">아이디 찾기</button>
                   )}
                 </div>
               </>
@@ -241,8 +243,8 @@ export default function LoginPage() {
             {/* Reset Password Modal */}
             {activeModal === 'resetPassword' && (
               <>
-                <h3 className="text-[20px] font-bold text-gray-900">비밀번호 찾기/재설정</h3>
-                <p className="text-[14px] text-gray-500">본인 확인 후 새 비밀번호를 설정할 수 있습니다.</p>
+                <h3 className="text-[20px] font-bold text-gray-900">비밀번호 찾기 / 재설정</h3>
+                <p className="text-[14px] text-gray-500">본인 확인(이름, 전화번호, 이메일, 집 주소) 통과 시 새 비밀번호로 재설정합니다.</p>
                 <div className="flex flex-col gap-3 mt-1">
                   <input
                     type="text"
@@ -266,17 +268,31 @@ export default function LoginPage() {
                     className="w-full h-11 border border-gray-300 rounded-lg px-3.5 text-[14px] outline-none focus:border-blue-500"
                   />
                   <input
+                    type="email"
+                    placeholder="이메일"
+                    value={modalEmail}
+                    onChange={e => setModalEmail(e.target.value)}
+                    className="w-full h-11 border border-gray-300 rounded-lg px-3.5 text-[14px] outline-none focus:border-blue-500"
+                  />
+                  <input
+                    type="text"
+                    placeholder="집 주소"
+                    value={modalAddress}
+                    onChange={e => setModalAddress(e.target.value)}
+                    className="w-full h-11 border border-gray-300 rounded-lg px-3.5 text-[14px] outline-none focus:border-blue-500"
+                  />
+                  <input
                     type="password"
-                    placeholder="새 비밀번호"
+                    placeholder="새 비밀번호 입력"
                     value={modalNewPassword}
                     onChange={e => setModalNewPassword(e.target.value)}
                     className="w-full h-11 border border-gray-300 rounded-lg px-3.5 text-[14px] outline-none focus:border-blue-500"
                   />
                 </div>
-                {modalMsg && <p className={`text-[13px] ${modalMsg.includes('성공') ? 'text-green-600' : 'text-red-500'}`}>{modalMsg}</p>}
+                {modalMsg && <p className={`text-[13px] ${modalMsg.includes('성공') ? 'text-green-600 font-bold' : 'text-red-500'}`}>{modalMsg}</p>}
                 <div className="flex justify-end gap-2 mt-2">
-                  <button onClick={closeModal} className="px-4 py-2 border border-gray-300 rounded-lg text-[14px] font-medium text-gray-600 hover:bg-gray-50">닫기</button>
-                  <button onClick={handleResetPassword} className="px-4 py-2 bg-blue-600 text-white rounded-lg text-[14px] font-medium hover:bg-blue-700">비밀번호 변경</button>
+                  <button onClick={closeModal} className="px-4 py-2 border border-gray-300 rounded-lg text-[14px] font-medium text-gray-600 hover:bg-gray-50">취소</button>
+                  <button onClick={handleResetPassword} className="px-4 py-2 bg-blue-600 text-white rounded-lg text-[14px] font-medium hover:bg-blue-700">비밀번호 재설정</button>
                 </div>
               </>
             )}
@@ -284,15 +300,15 @@ export default function LoginPage() {
             {/* Reactivate Dormant Account Modal */}
             {activeModal === 'reactivate' && (
               <>
-                <h3 className="text-[20px] font-bold text-gray-900">휴면 계정 해제</h3>
-                <p className="text-[14px] text-gray-500">장기 미접속으로 휴면 처리된 계정을 본인 인증 후 해제합니다.</p>
+                <h3 className="text-[20px] font-bold text-gray-900">휴면 계정 본인 확인 & 해제</h3>
+                <p className="text-[14px] text-gray-500">휴면 처리된 계정입니다. 본인 확인(이름, 전화번호, 이메일, 집 주소) 통과 시 즉시 재활성화됩니다.</p>
                 <div className="flex flex-col gap-3 mt-1">
                   <input
                     type="text"
                     placeholder="아이디"
                     value={modalUsername}
                     onChange={e => setModalUsername(e.target.value)}
-                    className="w-full h-11 border border-gray-300 rounded-lg px-3.5 text-[14px] outline-none focus:border-blue-500"
+                    className="w-full h-11 border border-gray-300 rounded-lg px-3.5 text-[14px] outline-none focus:border-blue-500 bg-gray-50"
                   />
                   <input
                     type="text"
@@ -308,11 +324,25 @@ export default function LoginPage() {
                     onChange={e => setModalPhone(e.target.value)}
                     className="w-full h-11 border border-gray-300 rounded-lg px-3.5 text-[14px] outline-none focus:border-blue-500"
                   />
+                  <input
+                    type="email"
+                    placeholder="이메일"
+                    value={modalEmail}
+                    onChange={e => setModalEmail(e.target.value)}
+                    className="w-full h-11 border border-gray-300 rounded-lg px-3.5 text-[14px] outline-none focus:border-blue-500"
+                  />
+                  <input
+                    type="text"
+                    placeholder="집 주소"
+                    value={modalAddress}
+                    onChange={e => setModalAddress(e.target.value)}
+                    className="w-full h-11 border border-gray-300 rounded-lg px-3.5 text-[14px] outline-none focus:border-blue-500"
+                  />
                 </div>
                 {modalMsg && <p className={`text-[13px] ${modalMsg.includes('성공') ? 'text-green-600 font-bold' : 'text-red-500'}`}>{modalMsg}</p>}
                 <div className="flex justify-end gap-2 mt-2">
                   <button onClick={closeModal} className="px-4 py-2 border border-gray-300 rounded-lg text-[14px] font-medium text-gray-600 hover:bg-gray-50">취소</button>
-                  <button onClick={handleReactivate} className="px-4 py-2 bg-green-600 text-white rounded-lg text-[14px] font-medium hover:bg-green-700">휴면 해제</button>
+                  <button onClick={handleReactivate} className="px-4 py-2 bg-green-600 text-white rounded-lg text-[14px] font-medium hover:bg-green-700">본인 확인 및 휴면 해제</button>
                 </div>
               </>
             )}

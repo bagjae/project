@@ -47,7 +47,7 @@ export function AuthProvider({ children }) {
       if (!response.ok) {
         const errData = await response.json().catch(() => ({}));
         if (response.status === 403 || (errData.detail && errData.detail.includes('휴면'))) {
-          return { success: false, isDormant: true, message: errData.detail || "휴면 계정입니다. 본인 인증 후 해제해 주세요." };
+          return { success: false, isDormant: true, message: errData.detail || "휴면 처리된 계정입니다. 본인 확인 후 재활성화됩니다." };
         }
         return { success: false, message: errData.detail || "아이디 또는 비밀번호가 일치하지 않습니다." };
       }
@@ -107,7 +107,9 @@ export function AuthProvider({ children }) {
           login_id: userObj.username,
           password: userObj.password,
           name: userObj.name,
-          phone_number: userObj.phone
+          phone_number: userObj.phone,
+          email: userObj.email,
+          address: userObj.address
         })
       });
       if (!response.ok) {
@@ -121,39 +123,43 @@ export function AuthProvider({ children }) {
     }
   };
 
-  // 휴면 계정 해제 API
-  // 휴면 계정 해제 API
-const reactivateUser = async (loginId, name, phoneNumber, email, address) => {
-  try {
-    const response = await fetch(`${BASE_URL}/users/reactivate`, {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ 
-        login_id: loginId, 
-        name, 
-        phone_number: phoneNumber,
-        email,
-        address
-      })
-    });
-    if (!response.ok) {
-      const errData = await response.json().catch(() => ({}));
-      return { success: false, message: errData.detail || "휴면 해제 정보가 일치하지 않습니다." };
+  // 휴면 계정 해제 API (아이디, 이름, 전화번호, 이메일, 집주소 본인확인)
+  const reactivateUser = async (loginId, name, phoneNumber, email, address) => {
+    try {
+      const response = await fetch(`${BASE_URL}/users/reactivate`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          login_id: loginId,
+          name,
+          phone_number: phoneNumber,
+          email,
+          address
+        })
+      });
+      if (!response.ok) {
+        const errData = await response.json().catch(() => ({}));
+        return { success: false, message: errData.detail || "일치하는 회원 정보를 찾을 수 없습니다." };
+      }
+      return { success: true, message: "계정이 성공적으로 재활성화되었습니다. 로그인해 주세요!" };
+    } catch (err) {
+      console.error(err);
+      return { success: false, message: "서버와 연결할 수 없습니다." };
     }
-    return { success: true, message: "계정이 성공적으로 재활성화되었습니다. 로그인해 주세요!" };
-  } catch (err) {
-    console.error(err);
-    return { success: false, message: "서버와 연결할 수 없습니다." };
-  }
-};
+  };
 
-  // 아이디 찾기 API
-  const findId = async (name, phoneNumber) => {
+  // 아이디 찾기 API (이름, 전화번호, 이메일, 집주소 본인확인)
+  const findId = async (name, phoneNumber, email, address) => {
     try {
       const response = await fetch(`${BASE_URL}/users/find-id`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ name, phone_number: phoneNumber })
+        body: JSON.stringify({
+          name,
+          phone_number: phoneNumber,
+          email,
+          address
+        })
       });
       if (!response.ok) {
         const errData = await response.json().catch(() => ({}));
@@ -167,8 +173,8 @@ const reactivateUser = async (loginId, name, phoneNumber, email, address) => {
     }
   };
 
-  // 비밀번호 재설정 API
-  const resetPassword = async (loginId, name, phoneNumber, newPassword) => {
+  // 비밀번호 재설정 API (아이디, 이름, 전화번호, 이메일, 집주소 본인확인 + 새 비밀번호)
+  const resetPassword = async (loginId, name, phoneNumber, email, address, newPassword) => {
     try {
       const response = await fetch(`${BASE_URL}/users/reset-password`, {
         method: 'POST',
@@ -177,12 +183,14 @@ const reactivateUser = async (loginId, name, phoneNumber, email, address) => {
           login_id: loginId,
           name,
           phone_number: phoneNumber,
+          email,
+          address,
           new_password: newPassword
         })
       });
       if (!response.ok) {
         const errData = await response.json().catch(() => ({}));
-        return { success: false, message: errData.detail || "정보가 일치하지 않아 비밀번호를 변경할 수 없습니다." };
+        return { success: false, message: errData.detail || "일치하는 회원 정보를 찾을 수 없습니다." };
       }
       return { success: true, message: "비밀번호가 성공적으로 변경되었습니다. 새로 로그인해 주세요." };
     } catch (err) {
@@ -248,7 +256,6 @@ const reactivateUser = async (loginId, name, phoneNumber, email, address) => {
         method: 'POST',
         headers: getAuthHeaders(),
         body: JSON.stringify({
-          user_id: currentUser.id,
           book_id: bookId
         })
       });

@@ -14,6 +14,8 @@ export default function SignUpPage() {
   const [password, setPassword] = useState('');
   const [confirmPassword, setConfirmPassword] = useState('');
   const [name, setName] = useState('');
+  const [email, setEmail] = useState('');
+  const [address, setAddress] = useState('');
 
   const [idError, setIdError] = useState('');
   const [pwError, setPwError] = useState('');
@@ -36,8 +38,8 @@ export default function SignUpPage() {
   };
 
   const handleSignup = async () => {
-    if (!username || !password || !confirmPassword || !name || !phone) {
-      alert("모든 필드를 입력해주세요.");
+    if (!username || !password || !confirmPassword || !name || !phone || !email || !address) {
+      alert("모든 필수 항목(이름, 전화번호, 이메일, 집 주소, 아이디, 비밀번호)을 입력해 주세요.");
       return;
     }
     const isDuplicate = await checkIdDuplicate(username);
@@ -50,7 +52,7 @@ export default function SignUpPage() {
       return;
     }
 
-    const result = await signup({ username, password, name, phone });
+    const result = await signup({ username, password, name, phone, email, address });
     if (result.success) {
       setShowWelcome(true);
     } else {
@@ -67,7 +69,7 @@ export default function SignUpPage() {
 
   return (
     <div className="min-h-screen w-full bg-[#fbfbfb] flex flex-col items-center justify-center font-sans py-12 px-6">
-      <div className="w-full max-w-[460px] rounded-2xl bg-white shadow-[0_8px_30px_rgb(0,0,0,0.04)] p-10 flex flex-col items-center border border-gray-200">
+      <div className="w-full max-w-[480px] rounded-2xl bg-white shadow-[0_8px_30px_rgb(0,0,0,0.04)] p-10 flex flex-col items-center border border-gray-200">
         
         {/* Logo and Title */}
         <div className="flex flex-col items-center gap-4 mb-8 w-full">
@@ -81,9 +83,9 @@ export default function SignUpPage() {
         </div>
 
         {/* Form Fields */}
-        <div className="w-full flex flex-col gap-5">
-          <div className="flex flex-col gap-2">
-            <label className="text-[14px] font-medium text-gray-700">이름</label>
+        <div className="w-full flex flex-col gap-4">
+          <div className="flex flex-col gap-1.5">
+            <label className="text-[14px] font-medium text-gray-700">이름 *</label>
             <input 
               type="text" 
               value={name}
@@ -93,8 +95,8 @@ export default function SignUpPage() {
             />
           </div>
 
-          <div className="flex flex-col gap-2">
-            <label className="text-[14px] font-medium text-gray-700">전화번호</label>
+          <div className="flex flex-col gap-1.5">
+            <label className="text-[14px] font-medium text-gray-700">전화번호 *</label>
             <input 
               type="text" 
               value={phone}
@@ -104,8 +106,30 @@ export default function SignUpPage() {
             />
           </div>
 
-          <div className="flex flex-col gap-2 relative">
-            <label className="text-[14px] font-medium text-gray-700">아이디</label>
+          <div className="flex flex-col gap-1.5">
+            <label className="text-[14px] font-medium text-gray-700">이메일 *</label>
+            <input 
+              type="email" 
+              value={email}
+              onChange={handleTyping(setEmail)}
+              placeholder="user@example.com" 
+              className="w-full h-[48px] rounded-lg border border-gray-300 px-4 text-[15px] text-gray-900 placeholder-gray-400 outline-none focus:border-blue-500 focus:ring-2 focus:ring-blue-100 transition-all" 
+            />
+          </div>
+
+          <div className="flex flex-col gap-1.5">
+            <label className="text-[14px] font-medium text-gray-700">집 주소 *</label>
+            <input 
+              type="text" 
+              value={address}
+              onChange={handleTyping(setAddress)}
+              placeholder="주소를 입력하세요 (예: 서울시 강남구 테헤란로 123)" 
+              className="w-full h-[48px] rounded-lg border border-gray-300 px-4 text-[15px] text-gray-900 placeholder-gray-400 outline-none focus:border-blue-500 focus:ring-2 focus:ring-blue-100 transition-all" 
+            />
+          </div>
+
+          <div className="flex flex-col gap-1.5 relative">
+            <label className="text-[14px] font-medium text-gray-700">아이디 *</label>
             <input 
               type="text" 
               value={username}
@@ -117,8 +141,8 @@ export default function SignUpPage() {
             {idError && <span className="text-red-500 text-[13px] font-medium mt-1 animate-fade-in-up flex items-center gap-1.5"><svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M12 8v4m0 4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"></path></svg>{idError}</span>}
           </div>
 
-          <div className="flex flex-col gap-2">
-            <label className="text-[14px] font-medium text-gray-700">비밀번호</label>
+          <div className="flex flex-col gap-1.5">
+            <label className="text-[14px] font-medium text-gray-700">비밀번호 *</label>
             <input 
               type="password" 
               value={password}
@@ -128,8 +152,8 @@ export default function SignUpPage() {
             />
           </div>
           
-          <div className="flex flex-col gap-2 relative">
-            <label className="text-[14px] font-medium text-gray-700">비밀번호 확인</label>
+          <div className="flex flex-col gap-1.5 relative">
+            <label className="text-[14px] font-medium text-gray-700">비밀번호 확인 *</label>
             <input 
               type="password" 
               value={confirmPassword}
