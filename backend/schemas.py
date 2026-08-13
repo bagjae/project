@@ -1,7 +1,6 @@
-from datetime import date,datetime  
+from datetime import date, datetime
 from pydantic import BaseModel
 from typing import Optional
-
 
 
 # 회원가입 요청 시 프론트엔드가 보내야 하는 값
@@ -186,8 +185,6 @@ class DormantUserItem(BaseModel):
     days_since_last_login: int | None
 
 
-
-
 class UserListItem(BaseModel):
     id: int
     login_id: str
@@ -197,3 +194,16 @@ class UserListItem(BaseModel):
 
     class Config:
         from_attributes = True
+
+
+class AdminUserItem(BaseModel):
+    id: int
+    login_id: str
+    name: str
+    phone_number: str | None = None
+    email: str | None = None
+    address: str | None = None
+    is_active: bool
+    is_admin: bool
+    last_login_at: date | None = None
+    days_since_last_login: int | None = None

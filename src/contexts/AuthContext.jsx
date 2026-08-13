@@ -302,6 +302,20 @@ export function AuthProvider({ children }) {
     }
   };
 
+  // 관리자 - 전체 사용자 목록 조회 (활성 / 휴면 포함)
+  const getAllUsers = async () => {
+    try {
+      const response = await fetch(`${BASE_URL}/admin/users`, {
+        headers: getAuthHeaders()
+      });
+      if (!response.ok) return [];
+      return await response.json();
+    } catch (err) {
+      console.error(err);
+      return [];
+    }
+  };
+
   // 관리자 - 휴면 사용자 목록 조회
   const getDormantUsers = async () => {
     try {
@@ -358,6 +372,7 @@ export function AuthProvider({ children }) {
     changePassword,
     rentBook,
     returnBook,
+    getAllUsers,
     getDormantUsers,
     activateUser,
     deactivateUser,

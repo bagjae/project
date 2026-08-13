@@ -413,6 +413,36 @@ def return_rental(
 
 # ===== 관리자 페이지 =====
 
+# 전체 회원 목록 조회 (활성/휴면 포함)
+@app.get("/admin/users", response_model=list[schemas.AdminUserItem])
+def get_all_users(
+    db: Session = Depends(get_db),
+    admin: models.User = Depends(auth.get_current_admin),
+):
+    users = db.query(models.User).order_by(models.User.id.asc()).all()
+    now = datetime.utcnow()
+    result = []
+    for u in users:
+        check_and_mark_dormant(u, db)
+        days_since = (now - u.last_login_at).days if u.last_login_at else None
+        last_login_date = u.last_login_at.date() if u.last_login_at else None
+        result.append(
+            schemas.AdminUserItem(
+                id=u.id,
+                login_id=u.login_id,
+                name=u.name,
+                phone_number=u.phone_number,
+                email=u.email,
+                address=u.address,
+                is_active=u.is_active,
+                is_admin=u.is_admin,
+                last_login_at=last_login_date,
+                days_since_last_login=days_since,
+            )
+        )
+    return result
+
+
 # 휴면 후보 목록 조회 (조회 시점에 기준 초과 계정은 자동으로 휴면 처리하며 함께 반환)
 @app.get("/admin/dormant-users", response_model=list[schemas.DormantUserItem])
 def get_dormant_users(
